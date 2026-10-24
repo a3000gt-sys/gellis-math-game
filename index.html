@@ -379,6 +379,60 @@
       .badge.notyet .medal { color: #a49fd0; }
       .award-pop { margin-top: 10px; }
 
+      /* ---------- friends club + grown-up gate ---------- */
+      .club-card { margin-top: 22px; }
+      .club-card h2 {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 20px;
+        color: var(--purple); margin: 0 0 6px;
+      }
+      .club-card p { margin: 0 0 6px; font-weight: 700; color: var(--ink-soft); font-size: 15.5px; line-height: 1.4; }
+      .club-lock-row { display: flex; align-items: center; gap: 12px; }
+      .club-lock-row .lock-badge {
+        width: 52px; height: 52px; border-radius: 50%; flex: 0 0 auto;
+        background: var(--purple-soft); display: flex; align-items: center; justify-content: center;
+      }
+      .club-lock-row .lock-badge svg { width: 26px; height: 26px; }
+      .club-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+      .club-actions .btn { min-height: 56px; }
+      .club-nick {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 21px; color: var(--purple);
+      }
+      .club-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .gate-overlay { z-index: 40; overflow-y: auto; }
+      .gate-card { max-width: 440px; width: 100%; text-align: left; padding: 26px 22px; margin: auto; }
+      .gate-card h2 {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 25px;
+        color: var(--purple); margin: 0 0 8px; line-height: 1.2;
+      }
+      .gate-card p { font-weight: 700; color: var(--ink-soft); font-size: 15.5px; line-height: 1.45; margin: 0 0 12px; }
+      .gate-card label {
+        display: block; font-family: "Baloo 2", sans-serif; font-weight: 700;
+        font-size: 16px; color: var(--ink); margin: 14px 0 6px;
+      }
+      .gate-card .hint { font-size: 13.5px; margin: 5px 0 0; }
+      .gate-input {
+        width: 100%; font-family: "Nunito", sans-serif; font-weight: 800; font-size: 18px;
+        color: var(--ink); background: var(--tile-bg);
+        border: 3px solid var(--tile-border); border-radius: 16px;
+        padding: 14px 16px; min-height: 58px;
+      }
+      .gate-input:focus-visible { outline: 3px solid var(--purple); outline-offset: 1px; }
+      .gate-code {
+        text-align: center; font-family: "Baloo 2", sans-serif; font-size: 30px;
+        letter-spacing: 10px;
+      }
+      .gate-fine {
+        background: var(--purple-soft); border-radius: 14px; padding: 11px 14px;
+        font-size: 14px !important; margin-top: 16px !important;
+      }
+      .gate-error {
+        background: var(--red-bg); border: 2px solid var(--red-border); border-radius: 14px;
+        padding: 10px 14px; font-weight: 800; font-size: 14.5px; color: var(--ink); margin-top: 14px;
+      }
+      .gate-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+      .gate-btns .btn { min-height: 58px; flex: 1 1 auto; }
+      .gate-btns .btn:disabled { opacity: 0.6; cursor: wait; }
+
       @media (prefers-reduced-motion: reduce) {
         .sym, .node.next .orb, .peek-cat.bounce, .peek-cat.nod, .peek-cat.cheer,
         .tile.correct, .tile.wrong, .twin-in, .whole-glow, .big-stars .pop, .confetti, .talking .cat-mouth { animation: none !important; }
@@ -1086,7 +1140,7 @@
       var NEW_LESSONS = {
 w2: [
   {
-    id: "frac", title: "Fraction Deep-Dive", icon: "frac", color: "#e879f9", badge: "Fraction Master",
+    id: "frac", title: "Fraction Fun", icon: "frac", color: "#e879f9", badge: "Fraction Master",
     steps: [
       { say: "Welcome to Middle School! Fractions grow up here. The top number is the numerator, the bottom is the denominator — and equivalent fractions are the same amount wearing different numbers.",
         art: { kind: "frac", bars: [{ parts: 2, filled: 1, label: "1/2" }, { parts: 4, filled: 2, label: "2/4" }] }, btn: "Let's dive in!" },
@@ -1113,7 +1167,7 @@ w2: [
     ]
   },
   {
-    id: "decpct", title: "Decimals & Percents", icon: "pct", color: "#14b8a6", badge: "Percent Pro",
+    id: "decpct", title: "Percent Party", icon: "pct", color: "#14b8a6", badge: "Percent Pro",
     steps: [
       { say: "Percents are fractions out of 100, and decimals are their close cousins. 0.5, one half, and 50% are all the same amount in different outfits.",
         art: { kind: "pie", pct: 50, label: "50%" }, btn: "Let's convert!" },
@@ -1194,7 +1248,7 @@ w2: [
     ]
   },
   {
-    id: "oop", title: "Order of Operations", icon: "oop", color: "#f43f5e", badge: "Order Expert",
+    id: "oop", title: "First Things First", icon: "oop", color: "#f43f5e", badge: "Order Hero",
     steps: [
       { say: "Math has traffic rules! Parentheses first, then exponents, then multiply and divide, then add and subtract — left to right inside each level. Skip the order and the answer changes.",
         art: { kind: "formula", lines: ["( )  →  x²  →  × ÷  →  + −"] }, btn: "Rules learned!" },
@@ -1221,7 +1275,7 @@ w2: [
     ]
   },
   {
-    id: "eq", title: "First Equations", icon: "eq", color: "#22d3ee", badge: "Equation Solver",
+    id: "eq", title: "Mystery Number", icon: "eq", color: "#22d3ee", badge: "Mystery Solver",
     steps: [
       { say: "An equation is a balance scale: both sides must weigh exactly the same. Whatever you do to one side, do to the other — and you can uncover the mystery number, x.",
         art: { kind: "scale", left: "x + 7", right: "15" }, btn: "Let's solve!" },
@@ -1250,7 +1304,7 @@ w2: [
 ],
 w3: [
   {
-    id: "algx", title: "Algebra Expressions", icon: "algx", color: "#a78bfa", badge: "Algebra Ace",
+    id: "algx", title: "Letter Puzzles", icon: "algx", color: "#a78bfa", badge: "Puzzle Ace",
     steps: [
       { say: "In high school, letters stand in for numbers that can change — variables. An expression like 3x + 5 is a recipe: multiply x by 3, then add 5.",
         art: { kind: "formula", lines: ["3x + 5"] }, btn: "Let's cook!" },
@@ -1277,7 +1331,7 @@ w3: [
     ]
   },
   {
-    id: "lin", title: "Lines & Slope", icon: "lin", color: "#2dd4bf", badge: "Slope Star",
+    id: "lin", title: "Lines That Climb", icon: "lin", color: "#2dd4bf", badge: "Climbing Star",
     steps: [
       { say: "A linear equation draws a straight line. In y = mx + b, m is the slope — how steeply the line climbs — and b is where it crosses the y-axis.",
         art: { kind: "grid", xMax: 5, yMax: 10, line: [0, 2, 4, 8], dots: [[0, 2, "(0, 2)"]] }, btn: "Let's draw lines!" },
@@ -1304,7 +1358,7 @@ w3: [
     ]
   },
   {
-    id: "quad", title: "Quadratics Intro", icon: "quad", color: "#fb7185", badge: "Parabola Pro",
+    id: "quad", title: "Bendy Lines", icon: "quad", color: "#fb7185", badge: "Bendy Line Pro",
     steps: [
       { say: "Square the variable and the straight line bends into a U-shape called a parabola. Quadratics model everything from thrown balls to satellite dishes.",
         art: { kind: "curve", type: "parabola" }, btn: "Let's bend it!" },
@@ -1331,7 +1385,7 @@ w3: [
     ]
   },
   {
-    id: "expo", title: "Exponents & Roots", icon: "expo", color: "#fbbf24", badge: "Power Player",
+    id: "expo", title: "Power Numbers", icon: "expo", color: "#fbbf24", badge: "Power Player",
     steps: [
       { say: "Exponents are repeated multiplication in shorthand: 2 to the 5th means 2 multiplied by itself 5 times. Roots run the film backwards.",
         art: { kind: "formula", lines: ["2⁵ = 2×2×2×2×2"] }, btn: "Power up!" },
@@ -1358,7 +1412,7 @@ w3: [
     ]
   },
   {
-    id: "geo2", title: "Angles & Pythagoras", icon: "geo", color: "#84cc16", badge: "Geometry Genius",
+    id: "geo2", title: "Triangle Tricks", icon: "geo", color: "#84cc16", badge: "Shape Genius",
     steps: [
       { say: "Two geometry greatest hits: the angles of every triangle sum to 180 degrees, and Pythagoras unlocks right triangles — a squared plus b squared equals c squared.",
         art: { kind: "angle", a: "65°", b: "55°", c: "60°" }, btn: "Let's measure!" },
@@ -1385,7 +1439,7 @@ w3: [
     ]
   },
   {
-    id: "prob", title: "Probability", icon: "prob", color: "#c084fc", badge: "Chance Champion",
+    id: "prob", title: "Chance Games", icon: "prob", color: "#c084fc", badge: "Chance Champion",
     steps: [
       { say: "Probability measures chance as a fraction: favorable outcomes over total outcomes. Zero means impossible, 1 means certain — everything real lives in between.",
         art: { kind: "formula", lines: ["P = favorable ÷ total"] }, btn: "Let's take a chance!" },
@@ -1414,7 +1468,7 @@ w3: [
 ],
 w4: [
   {
-    id: "func", title: "Functions", icon: "func", color: "#818cf8", badge: "Function Fan",
+    id: "func", title: "Number Machines", icon: "func", color: "#818cf8", badge: "Machine Fan",
     steps: [
       { say: "College math runs on functions: machines that take an input x and return exactly one output, written f of x. Plug in, compute, out comes the answer.",
         art: { kind: "formula", lines: ["x  →  f(x)  →  output"] }, btn: "Start the machine!" },
@@ -1441,7 +1495,7 @@ w4: [
     ]
   },
   {
-    id: "trig", title: "Trigonometry Basics", icon: "trig", color: "#f472b6", badge: "Trig Star",
+    id: "trig", title: "Triangle Ratios", icon: "trig", color: "#f472b6", badge: "Triangle Star",
     steps: [
       { say: "Trigonometry studies right triangles. Sine, cosine, and tangent are ratios of sides — and SOHCAHTOA helps you remember which is which.",
         art: { kind: "tri", bottom: "adjacent", left: "opposite", hyp: "hypotenuse", angle: true }, btn: "Meet the ratios!" },
@@ -1468,7 +1522,7 @@ w4: [
     ]
   },
   {
-    id: "logs", title: "Logarithms", icon: "logs", color: "#2dd4bf", badge: "Log Hunter",
+    id: "logs", title: "Power Puzzles", icon: "logs", color: "#2dd4bf", badge: "Puzzle Hunter",
     steps: [
       { say: "A logarithm asks a question: 'what exponent do I need?' Log base 2 of 8 asks: 2 to what power makes 8? Logs unravel exponents — they are the inverse operation.",
         art: { kind: "formula", lines: ["log₂(8) = ?", "because 2³ = 8"] }, btn: "Ask the question!" },
@@ -1495,7 +1549,7 @@ w4: [
     ]
   },
   {
-    id: "limits", title: "Limits", icon: "limits", color: "#60a5fa", badge: "Limit Leader",
+    id: "limits", title: "Getting Closer", icon: "limits", color: "#60a5fa", badge: "Closer Champion",
     steps: [
       { say: "A limit asks what value a function approaches as x creeps toward a target — even if the function never quite arrives there. Limits are the foundation all of calculus stands on.",
         art: { kind: "curve", type: "approach" }, btn: "Creep closer!" },
@@ -1522,7 +1576,7 @@ w4: [
     ]
   },
   {
-    id: "deriv", title: "Derivatives: Power Rule", icon: "deriv", color: "#fb923c", badge: "Derivative Dynamo",
+    id: "deriv", title: "How Fast?", icon: "deriv", color: "#fb923c", badge: "Speed Dynamo",
     steps: [
       { say: "A derivative measures how fast something is changing — the slope of a curve at a single point. Your first tool is the power rule: bring the exponent down in front, then subtract 1 from it.",
         art: { kind: "curve", type: "tangent" }, btn: "Find the slope!" },
@@ -1549,7 +1603,7 @@ w4: [
     ]
   },
   {
-    id: "integ", title: "Integrals Intro", icon: "integ", color: "#4ade80", badge: "Integral Explorer",
+    id: "integ", title: "Adding Up Areas", icon: "integ", color: "#4ade80", badge: "Area Explorer",
     steps: [
       { say: "Integration is accumulation — adding up infinitely many tiny pieces to find an area or a total. It is also the derivative's mirror image: antiderivatives run the power rule backwards.",
         art: { kind: "curve", type: "area" }, btn: "Add it all up!" },
@@ -1576,7 +1630,7 @@ w4: [
     ]
   },
   {
-    id: "stats", title: "Statistics", icon: "stats", color: "#facc15", badge: "Data Detective",
+    id: "stats", title: "Data Detectives", icon: "stats", color: "#facc15", badge: "Data Detective",
     steps: [
       { say: "Statistics summarizes data with a few powerful numbers. Three centers compete: the mean — the fair-share average; the median — the middle value; and the mode — the most frequent.",
         art: { kind: "bars", data: [4, 8, 6, 10, 2] }, btn: "Crunch the data!" },
@@ -1603,7 +1657,7 @@ w4: [
     ]
   },
   {
-    id: "matrix", title: "Matrices Intro", icon: "matrix", color: "#38bdf8", badge: "Matrix Master",
+    id: "matrix", title: "Number Grids", icon: "matrix", color: "#38bdf8", badge: "Grid Master",
     steps: [
       { say: "A matrix is a grid of numbers inside brackets — the workhorse of college math, computer graphics, and AI. You add matrices entry by entry, matching positions.",
         art: { kind: "matrix", a: [[1, 2], [3, 4]], b: [[5, 6], [7, 8]], op: "+", highlight: [0, 0] }, btn: "Enter the matrix!" },
@@ -1634,10 +1688,10 @@ w4: [
 
       /* ---------- the four worlds on the adventure map ---------- */
       var WORLDS = [
-        { id: "w1", num: 1, name: "Grade School", lessons: LESSONS },
-        { id: "w2", num: 2, name: "Middle School", lessons: NEW_LESSONS.w2 },
-        { id: "w3", num: 3, name: "High School", lessons: NEW_LESSONS.w3 },
-        { id: "w4", num: 4, name: "College", lessons: NEW_LESSONS.w4 }
+        { id: "w1", num: 1, name: "Number Meadow", lessons: LESSONS },
+        { id: "w2", num: 2, name: "Puzzle Hills", lessons: NEW_LESSONS.w2 },
+        { id: "w3", num: 3, name: "Rocket Ridge", lessons: NEW_LESSONS.w3 },
+        { id: "w4", num: 4, name: "Star Summit", lessons: NEW_LESSONS.w4 }
       ];
       var ALL_LESSONS = [];
       WORLDS.forEach(function (W) { W.lessons.forEach(function (L) { ALL_LESSONS.push(L); }); });
@@ -1720,10 +1774,10 @@ w4: [
         { id: "perfect12", name: "Perfectionist", req: "Finish 12 lessons with no mistakes", icon: "trophy", test: function (S) { return S.perfect >= 12; } },
         { id: "streak10", name: "On Fire", req: "Get a 10-answer streak", icon: "flame", test: function (S) { return S.bestStreak >= 10; } },
         { id: "streak25", name: "Unstoppable", req: "Get a 25-answer streak", icon: "flame", test: function (S) { return S.bestStreak >= 25; } },
-        { id: "world1", name: "Grade School Graduate", req: "Finish World 1", icon: "cap", test: function (S) { return S.worlds >= 1; } },
-        { id: "world2", name: "Middle School Master", req: "Finish World 2", icon: "cap", test: function (S) { return S.worlds >= 2; } },
-        { id: "world3", name: "High School Hero", req: "Finish World 3", icon: "cap", test: function (S) { return S.worlds >= 3; } },
-        { id: "world4", name: "College Champion", req: "Finish World 4", icon: "trophy", test: function (S) { return S.worlds >= 4; } },
+        { id: "world1", name: "Meadow Master", req: "Finish World 1", icon: "cap", test: function (S) { return S.worlds >= 1; } },
+        { id: "world2", name: "Hills Hero", req: "Finish World 2", icon: "cap", test: function (S) { return S.worlds >= 2; } },
+        { id: "world3", name: "Ridge Ranger", req: "Finish World 3", icon: "cap", test: function (S) { return S.worlds >= 3; } },
+        { id: "world4", name: "Summit Star", req: "Finish World 4", icon: "trophy", test: function (S) { return S.worlds >= 4; } },
         { id: "level5", name: "Level 5 Scholar", req: "Reach Level 5", icon: "bolt", test: function (S) { return S.level >= 5; } },
         { id: "level10", name: "Level 10 Legend", req: "Reach Level 10", icon: "crown", test: function (S) { return S.level >= 10; } }
       ];
@@ -2161,6 +2215,28 @@ w4: [
           trophies += '<div class="badge ' + (earned ? "earned" : "notyet") + '"><span class="medal">' + awardIcon(A.icon) + '</span><span class="bname">' + esc(A.name) + '</span>' +
             (earned ? "" : '<span class="breq">' + esc(A.req) + '</span>') + '</div>';
         });
+        /* Friends Club (online) — hidden behind the grown-up gate until a
+           session grant exists. Solo play above/below never needs it. */
+        var grant = getGrant();
+        var clubHtml;
+        if (grant) {
+          clubHtml =
+            '<section class="card club-card"><h2>Friends Club</h2>' +
+            '<p><span class="club-nick">' + esc(grant.nickname) + '</span> — you are on the club board for this visit!</p>' +
+            '<div class="club-stats">' +
+              '<span class="chip">' + starSVG("#ffc93d", 19) + totalStars() + '<span class="lbl">stars</span></span>' +
+              '<span class="chip"><span class="level-badge" style="font-size:13.5px;padding:1px 10px">Level ' + LI.level + '</span></span>' +
+              '<span class="chip">' + awardIcon("trophy") + state.awards.length + '<span class="lbl">trophies</span></span>' +
+            '</div>' +
+            '<p style="margin-top:10px">Your stars, level, and trophies are what your club friends see. A grown-up said yes to this visit — the yes ends when this tab closes.</p>' +
+            '<div class="club-actions"><button class="btn ghost" id="endVisitBtn">End this visit</button></div></section>';
+        } else {
+          clubHtml =
+            '<section class="card club-card"><h2>Friends Club</h2>' +
+            '<div class="club-lock-row"><span class="lock-badge">' + lockSVG("#7030d8") + '</span>' +
+            '<p style="margin:0">See your friends on the club board! Playing online needs a grown-up to say yes first — every visit.</p></div>' +
+            '<div class="club-actions"><button class="btn" id="gateBtn">Grown-ups: start here</button></div></section>';
+        }
         app.innerHTML =
           '<section class="card">' +
             '<div class="hello"><div class="cat-wrap">' + catSVG("") + '</div>' +
@@ -2177,11 +2253,16 @@ w4: [
               '<div class="level-sub">' + LI.into + ' of ' + LI.span + ' XP toward Level ' + (LI.level + 1) + '</div>' +
             '</div>' +
           '</section>' +
+          clubHtml +
           worldsHtml +
           '<section class="card badges-card"><h2>Badge shelf</h2><div class="badge-grid">' + badges + '</div></section>' +
           '<section class="card badges-card"><h2>Trophy shelf</h2><div class="badge-grid">' + trophies + '</div></section>' +
-          '<p class="foot-note">Made for Leo and friends · Grade school to college math</p>';
+          '<p class="foot-note">Made for Leo and friends · A big math adventure</p>';
 
+        var gateBtn = document.getElementById("gateBtn");
+        if (gateBtn) gateBtn.addEventListener("click", openGate);
+        var endVisitBtn = document.getElementById("endVisitBtn");
+        if (endVisitBtn) endVisitBtn.addEventListener("click", function () { clearGrant(); renderHome(); });
         document.getElementById("soundBtn").addEventListener("click", function () {
           state.sound = !state.sound;
           if (!state.sound) stopVoice();
@@ -2332,7 +2413,7 @@ w4: [
         if (worldJustDone && wi < WORLDS.length - 1) {
           pills += '<div><span class="new-badge">' + starSVG("#92400e", 24) + ' New world unlocked: World ' + WORLDS[wi + 1].num + ' · ' + esc(WORLDS[wi + 1].name) + '!</span></div>';
         } else if (worldJustDone) {
-          pills += '<div><span class="new-badge">' + starSVG("#92400e", 24) + ' You finished the whole climb — College complete!</span></div>';
+          pills += '<div><span class="new-badge">' + starSVG("#92400e", 24) + ' You finished the whole climb — every world complete!</span></div>';
         }
         if (run.newLevel) {
           var NLI = levelInfo(state.xp);
@@ -2372,6 +2453,146 @@ w4: [
           document.body.appendChild(d);
           (function (el) { setTimeout(function () { el.remove(); }, 4800); })(d);
         }
+      }
+
+      /* ============================================================
+         Grown-up gate for ONLINE play (Friends Club).
+         Solo play — lessons, stars, trophies — never needs this.
+         Contract: POST /access/request {email, nickname} sends a
+         6-digit code; POST /access/verify {email, code} returns a
+         session grant. The grant lives in sessionStorage ONLY, so
+         it dies with the tab: a grown-up approves EVERY session.
+         ============================================================ */
+      var CLUB_API = ""; /* club backend base URL; "" = same origin */
+      var GRANT_KEY = "gelli-club-grant-v1";
+      function getGrant() {
+        try {
+          var raw = sessionStorage.getItem(GRANT_KEY);
+          if (!raw) return null;
+          var g = JSON.parse(raw);
+          return (g && g.token && g.nickname) ? g : null;
+        } catch (e) { return null; }
+      }
+      function setGrant(g) { try { sessionStorage.setItem(GRANT_KEY, JSON.stringify(g)); } catch (e) {} }
+      function clearGrant() { try { sessionStorage.removeItem(GRANT_KEY); } catch (e) {} }
+
+      var BAD_SUBSTRINGS = ["shit", "fuck", "bitch", "dick", "porn", "sexy", "kill"];
+      var BAD_TOKENS = ["poophead", "stupid", "idiot", "dumb", "hate", "dead", "butt", "fart", "damn", "hell", "crap", "ass", "poop"];
+      function nicknameProblem(name) {
+        var n = String(name || "").trim();
+        if (n.length < 2) return "Please pick a nickname with at least 2 characters.";
+        if (n.length > 14) return "Please keep the nickname to 14 characters or fewer.";
+        if (!/^[A-Za-z0-9 ]+$/.test(n)) return "Nicknames use letters, numbers, and spaces only.";
+        var flat = n.toLowerCase().replace(/[^a-z]/g, "");
+        var i;
+        for (i = 0; i < BAD_SUBSTRINGS.length; i++) {
+          if (flat.indexOf(BAD_SUBSTRINGS[i]) >= 0) return "That word is not allowed in a nickname. Please try a friendlier one.";
+        }
+        var tokens = n.toLowerCase().split(/[^a-z]+/);
+        for (i = 0; i < tokens.length; i++) {
+          if (BAD_TOKENS.indexOf(tokens[i]) >= 0) return "That word is not allowed in a nickname. Please try a friendlier one.";
+        }
+        return "";
+      }
+      function emailProblem(email) {
+        var e = String(email || "").trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)) return "That email address does not look complete. Please check it and try again.";
+        return "";
+      }
+
+      function openGate() {
+        if (document.querySelector(".gate-overlay")) return;
+        stopVoice();
+        var step = 1, gateEmail = "", gateNick = "";
+        var ov = document.createElement("div");
+        ov.className = "overlay gate-overlay";
+        document.body.appendChild(ov);
+        function close() { ov.remove(); }
+        function showError(msg) {
+          var box = ov.querySelector("#gateError");
+          if (box) { box.textContent = msg; box.hidden = !msg; }
+        }
+        function drawStep1(busy) {
+          ov.innerHTML =
+            '<section class="card gate-card" role="dialog" aria-modal="true" aria-labelledby="gateTitle">' +
+            '<h2 id="gateTitle">Grown-ups only beyond this point</h2>' +
+            '<p>This gate opens <strong>online play</strong> — the Friends Club board — for <strong>this visit only</strong>. Playing alone never needs a grown-up.</p>' +
+            '<label for="gateEmail">Your email (the grown-up)</label>' +
+            '<input class="gate-input" id="gateEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="' + esc(gateEmail) + '"/>' +
+            '<label for="gateNick">Your child\'s club nickname</label>' +
+            '<input class="gate-input" id="gateNick" type="text" maxlength="14" autocomplete="off" placeholder="e.g. Rocket Fox 7" value="' + esc(gateNick) + '"/>' +
+            '<p class="hint">A fun made-up name — please do not use your child\'s real name. This is the name friends see on the board.</p>' +
+            '<p class="gate-fine">We will email you a 6-digit code to approve this visit. Your email also joins the <strong>Real Skills Press parent list</strong> for news and printable offers. Unsubscribe anytime — no spam, ever.</p>' +
+            '<div class="gate-error" id="gateError" hidden></div>' +
+            '<div class="gate-btns">' +
+              '<button class="btn ghost" id="gateCancel">Not now</button>' +
+              '<button class="btn green" id="gateSend"' + (busy ? " disabled" : "") + '>' + (busy ? "Sending…" : "Email my code") + '</button>' +
+            '</div></section>';
+          ov.querySelector("#gateCancel").addEventListener("click", close);
+          ov.querySelector("#gateSend").addEventListener("click", sendCode);
+          var em = ov.querySelector("#gateEmail");
+          if (em) em.focus();
+        }
+        function sendCode() {
+          gateEmail = ov.querySelector("#gateEmail").value;
+          gateNick = ov.querySelector("#gateNick").value.trim();
+          var prob = emailProblem(gateEmail) || nicknameProblem(gateNick);
+          if (prob) { showError(prob); return; }
+          drawStep1(true);
+          fetch(CLUB_API + "/access/request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: gateEmail.trim(), nickname: gateNick })
+          }).then(function (res) {
+            if (!res.ok) throw new Error("request failed");
+            step = 2; drawStep2(false);
+          }).catch(function () {
+            drawStep1(false);
+            showError("We could not send the code just now. Please check the email address and try again. Playing alone still works — tap Not now.");
+          });
+        }
+        function drawStep2(busy) {
+          ov.innerHTML =
+            '<section class="card gate-card" role="dialog" aria-modal="true" aria-labelledby="gateTitle2">' +
+            '<h2 id="gateTitle2">Check your email</h2>' +
+            '<p>We sent a <strong>6-digit code</strong> to ' + esc(gateEmail.trim()) + '. Type it here to approve the Friends Club for this visit.</p>' +
+            '<label for="gateCode">6-digit code</label>' +
+            '<input class="gate-input gate-code" id="gateCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="------"/>' +
+            '<div class="gate-error" id="gateError" hidden></div>' +
+            '<div class="gate-btns">' +
+              '<button class="btn ghost" id="gateBack">Back</button>' +
+              '<button class="btn green" id="gateVerify"' + (busy ? " disabled" : "") + '>' + (busy ? "Checking…" : "Approve this visit") + '</button>' +
+            '</div>' +
+            '<p class="hint" style="margin-top:12px">No code yet? Give it a minute and check spam. The code is for this visit only.</p>' +
+            '</section>';
+          ov.querySelector("#gateBack").addEventListener("click", function () { step = 1; drawStep1(false); });
+          ov.querySelector("#gateVerify").addEventListener("click", verifyCode);
+          var cd = ov.querySelector("#gateCode");
+          if (cd) cd.focus();
+        }
+        function verifyCode() {
+          var code = ov.querySelector("#gateCode").value.replace(/\D/g, "");
+          if (code.length !== 6) { showError("The code has 6 numbers. Please type all 6."); return; }
+          drawStep2(true);
+          fetch(CLUB_API + "/access/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: gateEmail.trim(), code: code })
+          }).then(function (res) {
+            if (!res.ok) throw new Error("verify failed");
+            return res.json();
+          }).then(function (data) {
+            var token = data && (data.grant || data.token || data.session);
+            if (!token) throw new Error("no grant");
+            setGrant({ token: String(token), nickname: (data && data.nickname) || gateNick, at: Date.now() });
+            close();
+            renderHome();
+          }).catch(function () {
+            drawStep2(false);
+            showError("That code did not work. Please check the numbers and try again — or tap Back to get a fresh code.");
+          });
+        }
+        drawStep1(false);
       }
 
       renderHome();
