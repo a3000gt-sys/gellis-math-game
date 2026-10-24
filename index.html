@@ -1,0 +1,2380 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Gelli's Math Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg1: #9db1ff;
+        --bg2: #b7a6ff;
+        --bg3: #d9c8ff;
+        --card: #ffffff;
+        --ink: #37335f;
+        --ink-soft: #7a75a8;
+        --purple: #7030d8;
+        --purple-deep: #5724b3;
+        --purple-soft: #f1ecff;
+        --tile-bg: #fbfaff;
+        --tile-border: #e3dbff;
+        --track: #e9e4ff;
+        --bubble: #f4f0ff;
+        --green: #3ecf4e;
+        --green-deep: #27ae3c;
+        --yellow-bg: #fef9c3;
+        --yellow-border: #f5cf3f;
+        --yellow-ink: #713f12;
+        --red-bg: #ffe1e6;
+        --red-border: #fda4af;
+        --chip: #ffffff;
+        --shadow: 0 24px 50px rgba(76, 29, 149, 0.28);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg1: #2b2560;
+          --bg2: #3a2f78;
+          --bg3: #4a3a8f;
+          --card: #2e2a55;
+          --ink: #f2f0ff;
+          --ink-soft: #b6b1e0;
+          --purple: #cdb9ff;
+          --purple-deep: #e3d6ff;
+          --purple-soft: #3d3773;
+          --tile-bg: #38336e;
+          --tile-border: #554e9e;
+          --track: #453f7d;
+          --bubble: #3d3876;
+          --yellow-bg: #5c5016;
+          --yellow-border: #d9ae2e;
+          --yellow-ink: #fde68a;
+          --red-bg: #5f2b3a;
+          --red-border: #b3546a;
+          --chip: #38336e;
+          --shadow: 0 24px 50px rgba(10, 5, 40, 0.55);
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Nunito", system-ui, sans-serif;
+        color: var(--ink);
+        background: var(--bg2);
+        min-height: 100dvh;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body::before {
+        content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+        background: linear-gradient(165deg, var(--bg1) 0%, var(--bg2) 52%, var(--bg3) 100%);
+      }
+      button { font-family: inherit; cursor: pointer; }
+      button:focus-visible { outline: 3px solid var(--purple); outline-offset: 2px; }
+
+      /* floating math symbols in the background world */
+      .sym {
+        position: fixed; z-index: 0; pointer-events: none;
+        font-family: "Baloo 2", sans-serif; font-weight: 800;
+        color: rgba(255, 255, 255, 0.34);
+        animation: floaty 8s ease-in-out infinite;
+        user-select: none;
+      }
+      @keyframes floaty {
+        0%, 100% { transform: translateY(0) rotate(-6deg); }
+        50% { transform: translateY(-16px) rotate(7deg); }
+      }
+
+      .stage {
+        position: relative; z-index: 1;
+        max-width: 480px; margin: 0 auto;
+        padding: 20px 14px 48px;
+      }
+
+      /* ---------- shared bits ---------- */
+      .card {
+        background: var(--card);
+        border-radius: 34px;
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+        position: relative;
+      }
+      .btn {
+        border: none; border-radius: 999px;
+        font-family: "Baloo 2", sans-serif; font-weight: 700;
+        font-size: 19px; padding: 13px 30px;
+        background: var(--purple); color: #fff;
+        box-shadow: 0 5px 0 var(--purple-deep);
+        transition: transform 0.08s ease, box-shadow 0.08s ease;
+      }
+      .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-deep); }
+      .btn.green { background: var(--green); box-shadow: 0 5px 0 var(--green-deep); color: #fff; }
+      .btn.green:active { box-shadow: 0 1px 0 var(--green-deep); }
+      .btn.ghost { background: var(--purple-soft); color: var(--purple); box-shadow: none; }
+      .icon-btn {
+        width: 42px; height: 42px; border-radius: 50%; border: none;
+        background: var(--purple-soft); color: var(--purple);
+        display: inline-flex; align-items: center; justify-content: center;
+        flex: 0 0 auto;
+      }
+      .icon-btn svg { width: 20px; height: 20px; }
+
+      /* ---------- home ---------- */
+      .hello { display: flex; gap: 14px; align-items: center; }
+      .hello .cat-wrap { width: 104px; flex: 0 0 auto; }
+      .hello h1 {
+        font-family: "Baloo 2", sans-serif; font-weight: 800;
+        font-size: 27px; line-height: 1.12; margin: 0 0 4px; color: var(--purple);
+      }
+      .hello p { margin: 0; font-weight: 700; color: var(--ink-soft); font-size: 15.5px; line-height: 1.35; }
+      .stats { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+      .chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--chip); border: 2px solid var(--tile-border);
+        border-radius: 999px; padding: 6px 13px 6px 9px;
+        font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 16px;
+      }
+      .chip svg { width: 19px; height: 19px; }
+      .chip .lbl { font-family: "Nunito", sans-serif; font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+      .sound-btn { margin-left: auto; }
+
+      .map-title {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; color: #fff;
+        font-size: 21px; margin: 26px 6px 4px;
+        text-shadow: 0 2px 10px rgba(76, 29, 149, 0.35);
+      }
+      .map { position: relative; padding: 14px 0 6px; }
+      .map::before {
+        content: ""; position: absolute; top: 8px; bottom: 8px; left: 50%;
+        border-left: 5px dashed rgba(255, 255, 255, 0.45);
+        transform: translateX(-50%);
+      }
+      .node-row { display: flex; margin: 6px 0; position: relative; }
+      .node-row.left { justify-content: flex-start; padding-left: 7%; }
+      .node-row.right { justify-content: flex-end; padding-right: 7%; }
+      .node { display: flex; flex-direction: column; align-items: center; width: 128px; background: none; border: none; padding: 0; }
+      .node .orb {
+        width: 88px; height: 88px; border-radius: 50%;
+        border: 5px solid #fff;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 22px rgba(76, 29, 149, 0.35), inset 0 -8px 0 rgba(0,0,0,0.12);
+        position: relative;
+      }
+      .node .orb svg { width: 42px; height: 42px; }
+      .node .name {
+        margin-top: 8px; font-family: "Baloo 2", sans-serif; font-weight: 700;
+        font-size: 15.5px; color: #fff; text-align: center; line-height: 1.15;
+        text-shadow: 0 2px 8px rgba(76, 29, 149, 0.45);
+      }
+      .node .stars { display: flex; gap: 2px; margin-top: 3px; min-height: 18px; }
+      .node .stars svg { width: 17px; height: 17px; }
+      .node.locked .orb { filter: grayscale(0.9); opacity: 0.75; }
+      .node.locked .name { opacity: 0.8; }
+      .node .lock {
+        position: absolute; right: -4px; bottom: -2px;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: #fff; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 3px 8px rgba(76, 29, 149, 0.3);
+      }
+      .node .lock svg { width: 16px; height: 16px; }
+      .node.next .orb { animation: pulse-ring 1.8s ease-in-out infinite; }
+      @keyframes pulse-ring {
+        0%, 100% { box-shadow: 0 10px 22px rgba(76,29,149,.35), 0 0 0 0 rgba(255,255,255,.65), inset 0 -8px 0 rgba(0,0,0,.12); }
+        50% { box-shadow: 0 10px 22px rgba(76,29,149,.35), 0 0 0 13px rgba(255,255,255,0), inset 0 -8px 0 rgba(0,0,0,.12); }
+      }
+      .node:not(.locked):active .orb { transform: scale(0.94); }
+
+      .badges-card { margin-top: 22px; }
+      .badges-card h2 {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 20px;
+        color: var(--purple); margin: 0 0 12px;
+      }
+      .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 6px; }
+      .badge { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; }
+      .badge .medal {
+        width: 56px; height: 56px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .badge .medal svg { width: 30px; height: 30px; }
+      .badge .bname { font-size: 11.5px; font-weight: 800; color: var(--ink-soft); line-height: 1.15; }
+      .badge.earned .medal { background: linear-gradient(150deg, #ffe27a, #ffb92e); box-shadow: 0 5px 12px rgba(245, 158, 11, 0.4); }
+      .badge.notyet .medal { background: var(--purple-soft); }
+      .badge.notyet { opacity: 0.55; filter: grayscale(0.7); }
+
+      /* ---------- lesson ---------- */
+      .prog-row { display: flex; align-items: center; gap: 10px; }
+      .track { flex: 1; height: 17px; border-radius: 99px; background: var(--track); position: relative; }
+      .fill {
+        height: 100%; border-radius: 99px; width: 0%;
+        background: linear-gradient(90deg, #b79cff, var(--purple));
+        transition: width 0.55s cubic-bezier(0.34, 1.3, 0.5, 1);
+      }
+      .end-star { position: absolute; right: -9px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; }
+      .end-star svg { width: 30px; height: 30px; }
+      .end-star.burst { animation: starburst 0.7s ease; }
+      @keyframes starburst {
+        0% { transform: translateY(-50%) scale(1); }
+        40% { transform: translateY(-50%) scale(1.7) rotate(24deg); }
+        100% { transform: translateY(-50%) scale(1); }
+      }
+      .q-head {
+        font-family: "Baloo 2", sans-serif; font-weight: 800;
+        font-size: clamp(23px, 6vw, 29px); line-height: 1.18;
+        color: var(--purple); margin: 20px 2px 0;
+      }
+      .visual {
+        position: relative; margin-top: 34px;
+        background: linear-gradient(160deg, var(--purple-soft), transparent 130%);
+        border-radius: 26px; padding: 20px 12px 14px;
+        display: flex; align-items: center; justify-content: center; min-height: 168px;
+      }
+      .visual svg.art { width: 100%; height: 198px; display: block; }
+      .cat-wrap svg { width: 100%; height: auto; display: block; }
+      .peek-cat {
+        position: absolute; top: -34px; right: 8px; width: 92px; z-index: 3;
+        transform-origin: 50% 90%;
+        filter: drop-shadow(0 6px 8px rgba(76, 29, 149, 0.25));
+      }
+      .peek-cat.bounce { animation: cat-bounce 0.65s ease; }
+      .peek-cat.nod { animation: cat-nod 0.7s ease; }
+      .peek-cat.cheer { animation: cat-cheer 0.9s ease; }
+      @keyframes cat-bounce {
+        0%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-17px) rotate(-3deg); }
+        55% { transform: translateY(0); }
+        75% { transform: translateY(-9px) rotate(2deg); }
+      }
+      @keyframes cat-nod {
+        0%, 100% { transform: rotate(0); }
+        30% { transform: rotate(5deg) translateY(3px); }
+        60% { transform: rotate(-4deg) translateY(3px); }
+      }
+      @keyframes cat-cheer {
+        0%, 100% { transform: translateY(0) rotate(0); }
+        25% { transform: translateY(-14px) rotate(-5deg); }
+        50% { transform: translateY(-4px) rotate(5deg); }
+        75% { transform: translateY(-12px) rotate(-3deg); }
+      }
+      .bubble {
+        position: relative; margin-top: 16px;
+        background: var(--bubble); border-radius: 20px;
+        padding: 13px 16px; font-size: 17.5px; font-weight: 700; line-height: 1.4;
+      }
+      .bubble::before {
+        content: ""; position: absolute; top: -8px; right: 44px;
+        width: 18px; height: 18px; background: var(--bubble);
+        transform: rotate(45deg); border-radius: 4px;
+      }
+      .bubble .who {
+        display: block; font-family: "Baloo 2", sans-serif; font-size: 12.5px;
+        letter-spacing: 0.4px; color: var(--purple); margin-bottom: 2px;
+      }
+      .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+      .answers.one-col { grid-template-columns: 1fr; }
+      .tile {
+        border: 3px solid var(--tile-border); background: var(--tile-bg);
+        color: var(--ink); border-radius: 22px;
+        font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 25px;
+        padding: 17px 8px; min-height: 68px;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+      }
+      .tile:active { transform: scale(0.97); }
+      .tile.correct { background: var(--green); border-color: var(--green-deep); color: #fff; animation: tile-pop 0.45s ease; }
+      .tile.wrong { background: var(--red-bg); border-color: var(--red-border); animation: shake 0.45s ease; }
+      .tile.dim { opacity: 0.45; }
+      @keyframes tile-pop { 0% { transform: scale(1); } 45% { transform: scale(1.09); } 100% { transform: scale(1); } }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-8px); }
+        40% { transform: translateX(8px); }
+        60% { transform: translateX(-6px); }
+        80% { transform: translateX(6px); }
+      }
+      .aha {
+        margin-top: 16px; background: var(--yellow-bg);
+        border: 2.5px dashed var(--yellow-border); border-radius: 18px;
+        padding: 12px 15px; font-weight: 800; font-size: 16.5px; line-height: 1.4;
+        color: var(--yellow-ink);
+        animation: aha-in 0.4s ease;
+      }
+      .aha .aha-tag {
+        font-family: "Baloo 2", sans-serif; color: #d97706; margin-right: 6px;
+      }
+      @media (prefers-color-scheme: dark) { .aha .aha-tag { color: #fbbf24; } }
+      @keyframes aha-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      .next-row { margin-top: 18px; display: flex; justify-content: center; }
+      .step-in { animation: step-in 0.35s ease; }
+      @keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+      /* Gelli's mouth moves while her recorded voice plays */
+      .cat-mouth { transform-box: fill-box; transform-origin: 50% 0%; }
+      .talking .cat-mouth { animation: mouth-talk 0.3s ease-in-out infinite; }
+      @keyframes mouth-talk {
+        0%, 100% { transform: scaleY(0.4); }
+        50% { transform: scaleY(1.3); }
+      }
+
+      /* twin trick animation */
+      .twin-in { animation: twin-in 1.15s cubic-bezier(0.3, 1.2, 0.4, 1) both; }
+      @keyframes twin-in {
+        from { transform: translate(64px, -46px) rotate(9deg); opacity: 0; }
+        to { transform: translate(0, 0) rotate(0); opacity: 1; }
+      }
+      .whole-glow { animation: whole-glow 1.4s ease 0.9s both; }
+      @keyframes whole-glow { from { opacity: 0; } to { opacity: 1; } }
+
+      /* ---------- celebration ---------- */
+      .overlay {
+        position: fixed; inset: 0; z-index: 20;
+        background: rgba(58, 38, 130, 0.55);
+        display: flex; align-items: center; justify-content: center;
+        padding: 18px;
+      }
+      .celebrate { max-width: 420px; width: 100%; text-align: center; padding: 30px 22px 26px; }
+      .celebrate h2 {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 30px;
+        color: var(--purple); margin: 10px 0 2px;
+      }
+      .celebrate p { font-weight: 700; color: var(--ink-soft); margin: 4px 0 0; font-size: 16.5px; }
+      .big-stars { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+      .big-stars svg { width: 62px; height: 62px; }
+      .big-stars .pop { animation: star-pop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+      @keyframes star-pop { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+      .new-badge {
+        display: inline-flex; align-items: center; gap: 9px; margin-top: 18px;
+        background: linear-gradient(150deg, #ffe27a, #ffb92e); color: #713f12;
+        font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 17px;
+        border-radius: 999px; padding: 9px 20px 9px 12px;
+        box-shadow: 0 6px 14px rgba(245, 158, 11, 0.4);
+      }
+      .new-badge svg { width: 24px; height: 24px; }
+      .celebrate .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+      .confetti { position: fixed; top: -14px; z-index: 21; border-radius: 3px; pointer-events: none; animation: confetti-fall linear both; }
+      @keyframes confetti-fall {
+        to { transform: translateY(105dvh) rotate(720deg); }
+      }
+
+      .foot-note { text-align: center; color: rgba(255,255,255,0.85); font-weight: 700; font-size: 13.5px; margin-top: 26px; }
+
+      /* ---------- worlds, level, trophies ---------- */
+      .world-note {
+        display: flex; align-items: center; gap: 7px;
+        color: rgba(255, 255, 255, 0.92); font-weight: 700; font-size: 14px; margin: 0 6px 2px;
+      }
+      .world-note svg { width: 15px; height: 15px; flex: 0 0 auto; }
+      .level-box { margin-top: 16px; background: var(--purple-soft); border-radius: 18px; padding: 12px 14px; }
+      .level-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+      .level-badge {
+        font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 16.5px; color: #fff;
+        background: var(--purple); border-radius: 999px; padding: 2px 13px;
+      }
+      .level-title { font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 16px; color: var(--purple); }
+      .level-xp { margin-left: auto; font-weight: 800; font-size: 13.5px; color: var(--ink-soft); }
+      .level-box .track { margin-top: 9px; }
+      .level-sub { margin-top: 6px; font-size: 12.5px; font-weight: 800; color: var(--ink-soft); }
+      .badge .breq { font-size: 10.5px; font-weight: 700; color: var(--ink-soft); line-height: 1.25; }
+      .badge.earned .medal { color: #92400e; }
+      .badge.notyet .medal { color: #a49fd0; }
+      .award-pop { margin-top: 10px; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .sym, .node.next .orb, .peek-cat.bounce, .peek-cat.nod, .peek-cat.cheer,
+        .tile.correct, .tile.wrong, .twin-in, .whole-glow, .big-stars .pop, .confetti, .talking .cat-mouth { animation: none !important; }
+        .fill, .tile, .btn { transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <span class="sym" style="left:4%; top:9%; font-size:44px;" aria-hidden="true">×</span>
+    <span class="sym" style="right:6%; top:16%; font-size:36px; animation-delay:-2s;" aria-hidden="true">÷</span>
+    <span class="sym" style="left:7%; top:46%; font-size:30px; animation-delay:-4s;" aria-hidden="true">+</span>
+    <span class="sym" style="right:4%; top:55%; font-size:42px; animation-delay:-1s;" aria-hidden="true">=</span>
+    <span class="sym" style="left:5%; top:78%; font-size:34px; animation-delay:-5s;" aria-hidden="true">%</span>
+    <span class="sym" style="right:8%; top:84%; font-size:28px; animation-delay:-3s;" aria-hidden="true">−</span>
+    <span class="sym" style="left:44%; top:3%; font-size:26px; animation-delay:-6s;" aria-hidden="true">+</span>
+    <span class="sym" style="right:38%; top:93%; font-size:30px; animation-delay:-2.5s;" aria-hidden="true">×</span>
+
+    <main class="stage" id="app"></main>
+
+    <script>
+      "use strict";
+      /* ============================================================
+         Gelli's Math Game — a talking-tutor math game for 2nd grade.
+         Gelli the cat asks, the child taps an answer, Gelli reacts,
+         and the trick animates — just like the video.
+         ============================================================ */
+
+      /* ---------- tiny SVG helpers ---------- */
+      function starSVG(fill, size) {
+        return '<svg viewBox="0 0 24 24" width="' + (size || 24) + '" height="' + (size || 24) + '" aria-hidden="true"><path d="M12 1.8l3.1 6.9 7.5.7-5.6 5 1.6 7.4L12 18l-6.6 3.8L7 14.4 1.4 9.4l7.5-.7z" fill="' + fill + '" stroke="rgba(0,0,0,0.08)" stroke-width="0.6"/></svg>';
+      }
+      function flameSVG() {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c1 3.8-1.6 5.6-3.1 7.4C7.3 10.8 6.2 12.6 6.2 15a5.8 5.8 0 0 0 11.6 0c0-1.7-.6-3-1.4-4.3-.5 1-1.2 1.7-2.2 2.1.3-3.2-.5-7.6-2.2-11.3z" fill="#ff8a3d"/><path d="M12 22.4a3.4 3.4 0 0 1-3.4-3.4c0-1.5.8-2.5 1.7-3.6.6-.8 1.2-1.6 1.7-2.7.5 1.1 1.1 1.9 1.7 2.7.9 1.1 1.7 2.1 1.7 3.6A3.4 3.4 0 0 1 12 22.4z" fill="#ffc53d"/></svg>';
+      }
+      function lockSVG(color) {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a5 5 0 0 0-5-5zm-3 8V8a3 3 0 1 1 6 0v3H9z" fill="' + (color || "#8a84b8") + '"/></svg>';
+      }
+      function soundSVG(on) {
+        if (on) return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4.5v-15L8 9H4z" fill="currentColor"/><path d="M16.5 8.6a4.4 4.4 0 0 1 0 6.8M19 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4.5v-15L8 9H4z" fill="currentColor"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      }
+      function closeSVG() {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+      }
+      function medalSVG() {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14.5" r="6.5" fill="#fff" opacity="0.9"/><path d="M12 10.4l1.2 2.6 2.9.3-2.2 1.9.7 2.8L12 16.5l-2.6 1.5.7-2.8-2.2-1.9 2.9-.3z" fill="#f59e0b"/></svg>';
+      }
+
+      /* ---------- Gelli the cat (our own original mascot) ---------- */
+      function catSVG(cls) {
+        return '<svg class="' + (cls || "") + '" viewBox="0 0 220 225" role="img" aria-label="Gelli the cat">' +
+          '<polygon points="56,72 42,16 102,38" fill="#f59e0b"/>' +
+          '<polygon points="164,72 178,16 118,38" fill="#f59e0b"/>' +
+          '<polygon points="61,61 53,31 89,43" fill="#fbcfe8"/>' +
+          '<polygon points="159,61 167,31 131,43" fill="#fbcfe8"/>' +
+          '<circle cx="110" cy="126" r="76" fill="#fbbf24"/>' +
+          '<path d="M92 60q3 11 0 20M110 56q3 11 0 22M128 60q-3 11 0 20" fill="none" stroke="#d97706" stroke-width="5" stroke-linecap="round" opacity="0.65"/>' +
+          '<circle cx="85" cy="116" r="13.5" fill="#fff"/><circle cx="135" cy="116" r="13.5" fill="#fff"/>' +
+          '<circle cx="86" cy="118" r="7.4" fill="#33305e"/><circle cx="134" cy="118" r="7.4" fill="#33305e"/>' +
+          '<circle cx="89" cy="114" r="2.6" fill="#fff"/><circle cx="137" cy="114" r="2.6" fill="#fff"/>' +
+          '<circle cx="62" cy="142" r="9" fill="#fda4af" opacity="0.55"/><circle cx="158" cy="142" r="9" fill="#fda4af" opacity="0.55"/>' +
+          '<ellipse cx="110" cy="152" rx="26" ry="17" fill="#fff7e6"/>' +
+          '<path d="M101 141q9-6 18 0q-1 8-9 9q-8-1-9-9z" fill="#f472b6"/>' +
+          '<g class="cat-mouth"><path d="M110 150q0 7-9 7M110 150q0 7 9 7" fill="none" stroke="#8a5a2b" stroke-width="2.6" stroke-linecap="round"/></g>' +
+          '<path d="M26 128l36 4M28 149l34-3M182 124l-34 6M180 147l-32-4" stroke="#d97706" stroke-width="2.4" stroke-linecap="round" opacity="0.6" fill="none"/>' +
+          '</svg>';
+      }
+      /* ---------- problem illustrations (all original SVG art) ---------- */
+      function artTwin(stage) {
+        // stage 0: lone triangle. stage 1: twin flies in. stage 2: whole square, halves labeled.
+        var twin = "", frame = "", labels = "";
+        if (stage >= 1) {
+          twin = '<polygon class="twin-in" points="190,45 70,45 190,165" fill="#fde68a" stroke="#d97706" stroke-width="4" stroke-linejoin="round"/>';
+        }
+        if (stage >= 2) {
+          frame = '<rect class="whole-glow" x="70" y="45" width="120" height="120" fill="none" stroke="#7030d8" stroke-width="5" rx="4"/>' +
+                  '<line class="whole-glow" x1="70" y1="45" x2="190" y2="165" stroke="#7030d8" stroke-width="3" stroke-dasharray="7 6"/>';
+          labels = '<text x="100" y="140" font-family="Baloo 2" font-weight="800" font-size="21" fill="#7030d8">½</text>' +
+                   '<text x="152" y="86" font-family="Baloo 2" font-weight="800" font-size="21" fill="#b45309">½</text>';
+        }
+        return '<svg class="art" viewBox="0 0 260 205" role="img" aria-label="A triangle and its twin">' +
+          '<polygon points="70,165 70,45 190,165" fill="#a78bfa" stroke="#7030d8" stroke-width="4" stroke-linejoin="round"/>' +
+          twin + frame + labels + '</svg>';
+      }
+      function artRectTwin(stage) {
+        var twin = "", frame = "";
+        if (stage >= 1) {
+          twin = '<polygon class="twin-in" points="225,50 35,50 225,150" fill="#fde68a" stroke="#d97706" stroke-width="4" stroke-linejoin="round"/>';
+          frame = '<rect class="whole-glow" x="35" y="50" width="190" height="100" fill="none" stroke="#7030d8" stroke-width="5" rx="4"/>';
+        }
+        return '<svg class="art" viewBox="0 0 260 200" role="img" aria-label="A rectangle made of two triangles">' +
+          '<polygon points="35,150 35,50 225,150" fill="#a78bfa" stroke="#7030d8" stroke-width="4" stroke-linejoin="round"/>' +
+          twin + frame + '</svg>';
+      }
+      function artHalves() {
+        return '<svg class="art" viewBox="0 0 260 190" role="img" aria-label="A circle cut into two halves">' +
+          '<path d="M130 25 A65 65 0 0 0 130 155 Z" fill="#fde68a" stroke="#d97706" stroke-width="4"/>' +
+          '<path d="M130 25 A65 65 0 0 1 130 155 Z" fill="#a78bfa" stroke="#7030d8" stroke-width="4"/>' +
+          '<text x="86" y="100" font-family="Baloo 2" font-weight="800" font-size="26" fill="#92400e">½</text>' +
+          '<text x="152" y="100" font-family="Baloo 2" font-weight="800" font-size="26" fill="#4c1d95">½</text></svg>';
+      }
+      function blocksGroup(tens, ones, x, y, color) {
+        var s = "";
+        var i, cx = x;
+        for (i = 0; i < tens; i++) {
+          s += '<g><rect x="' + cx + '" y="' + y + '" width="17" height="86" rx="4" fill="' + color + '"/>' +
+            '<line x1="' + cx + '" y1="' + (y + 28.7) + '" x2="' + (cx + 17) + '" y2="' + (y + 28.7) + '" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>' +
+            '<line x1="' + cx + '" y1="' + (y + 57.3) + '" x2="' + (cx + 17) + '" y2="' + (y + 57.3) + '" stroke="rgba(255,255,255,0.65)" stroke-width="2"/></g>';
+          cx += 23;
+        }
+        if (tens > 0 && ones > 0) cx += 5;
+        var perRow = 5;
+        for (i = 0; i < ones; i++) {
+          var ox = cx + (i % perRow) * 22, oy = y + 86 - 19 - Math.floor(i / perRow) * 22;
+          s += '<rect x="' + ox + '" y="' + oy + '" width="18" height="18" rx="4" fill="#fbbf24" stroke="#d97706" stroke-width="1.6"/>';
+        }
+        var w = (tens * 23) + (ones > 0 ? (tens > 0 ? 5 : 0) + Math.min(ones, perRow) * 22 : 0);
+        return { svg: s, width: Math.max(w, 20) };
+      }
+      function artBlocks(groups) {
+        // groups: [{t, o, color, op}] rendered side by side with + or − between, scaled to fit
+        var parts = [], totalW = 0;
+        groups.forEach(function (g, idx) {
+          var b = blocksGroup(g.t, g.o, 0, 0, g.color || "#7030d8");
+          parts.push({ b: b, g: g }); totalW += b.width; if (idx < groups.length - 1) totalW += 34;
+        });
+        var inner = "", x = 0;
+        parts.forEach(function (p, idx) {
+          inner += '<g transform="translate(' + x + ',0)">' + p.b.svg + '</g>';
+          x += p.b.width;
+          if (idx < parts.length - 1) {
+            inner += '<text x="' + (x + 17) + '" y="52" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="30" fill="#7030d8">' + (p.g.op || "+") + '</text>';
+            x += 34;
+          }
+        });
+        var s = Math.min(1, 330 / Math.max(totalW, 1));
+        var tx = (340 - totalW * s) / 2, ty = 14 + (1 - s) * 30;
+        return '<svg class="art" viewBox="0 0 340 120" role="img" aria-label="Tens rods and ones cubes"><g transform="translate(' + tx.toFixed(1) + ',' + ty.toFixed(1) + ') scale(' + s.toFixed(3) + ')">' + inner + '</g></svg>';
+      }
+      function artPlaceValue(tens, ones) {
+        var tw = Math.max(tens * 23, 1), ts = Math.min(1, 116 / tw);
+        var tx = 30 + (130 - tw * ts) / 2, tyy = 52 + (86 - 86 * ts);
+        return '<svg class="art" viewBox="0 0 340 175" role="img" aria-label="Place value chart">' +
+          '<rect x="30" y="12" width="130" height="150" rx="14" fill="#ede9ff"/>' +
+          '<rect x="180" y="12" width="130" height="150" rx="14" fill="#fef3c7"/>' +
+          '<text x="95" y="40" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#7030d8">Tens</text>' +
+          '<text x="245" y="40" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#b45309">Ones</text>' +
+          '<g transform="translate(' + tx.toFixed(1) + ',' + tyy.toFixed(1) + ') scale(' + ts.toFixed(3) + ')">' + blocksGroup(tens, 0, 0, 0, "#7030d8").svg + '</g>' +
+          '<g transform="translate(196,52)">' + blocksGroup(0, ones, 0, 0, "#f59e0b").svg + '</g></svg>';
+      }
+      function artSkip(nums, stepWord) {
+        var s = "", n = nums.length;
+        var w = 350, gap = w / n;
+        nums.forEach(function (v, i) {
+          var cx = gap * i + gap / 2, cy = i % 2 === 0 ? 96 : 62;
+          var isBlank = v === null;
+          s += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="27" ry="21" fill="' + (isBlank ? "#fde68a" : "#a78bfa") + '" stroke="' + (isBlank ? "#d97706" : "#7030d8") + '" stroke-width="3.4"/>' +
+            '<text x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="21" fill="' + (isBlank ? "#92400e" : "#fff") + '">' + (isBlank ? "?" : v) + '</text>';
+          if (i < n - 1) {
+            var nx = gap * (i + 1) + gap / 2, ny = (i + 1) % 2 === 0 ? 96 : 62;
+            s += '<path d="M' + (cx + 24) + ' ' + (cy - 8) + ' Q ' + ((cx + nx) / 2) + ' ' + (Math.min(cy, ny) - 34) + ' ' + (nx - 24) + ' ' + (ny - 8) + '" fill="none" stroke="#7030d8" stroke-width="2.6" stroke-dasharray="5 5" marker-end="url(#ah)"/>';
+          }
+        });
+        return '<svg class="art" viewBox="0 0 350 140" role="img" aria-label="Stepping stones: ' + stepWord + '"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6z" fill="#7030d8"/></marker></defs>' + s + '</svg>';
+      }
+      function coinFace(kind, cx, cy) {
+        var defs = {
+          penny:  { r: 27, fill: "#e8a06a", stroke: "#b45309", label: "1¢", name: "Penny" },
+          nickel: { r: 29, fill: "#d7dae3", stroke: "#8a90a6", label: "5¢", name: "Nickel" },
+          dime:   { r: 23, fill: "#d7dae3", stroke: "#8a90a6", label: "10¢", name: "Dime" },
+          quarter:{ r: 32, fill: "#d7dae3", stroke: "#8a90a6", label: "25¢", name: "Quarter" }
+        };
+        var d = defs[kind];
+        return '<g><circle cx="' + cx + '" cy="' + cy + '" r="' + d.r + '" fill="' + d.fill + '" stroke="' + d.stroke + '" stroke-width="3"/>' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + (d.r - 5) + '" fill="none" stroke="' + d.stroke + '" stroke-width="1.4" opacity="0.6"/>' +
+          '<text x="' + cx + '" y="' + (cy + 6) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="17" fill="#4a4a68">' + d.label + '</text>' +
+          '<text x="' + cx + '" y="' + (cy + d.r + 17) + '" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="12.5" fill="#7a75a8">' + d.name + '</text></g>';
+      }
+      function artCoins(kinds) {
+        var w = 340, gap = w / kinds.length, s = "";
+        kinds.forEach(function (k, i) { s += coinFace(k, gap * i + gap / 2, 58); });
+        return '<svg class="art" viewBox="0 0 340 128" role="img" aria-label="Coins">' + s + '</svg>';
+      }
+      function artClock(h, m) {
+        var ha = ((h % 12) + m / 60) * 30, ma = m * 6;
+        function hand(angle, len, wdt, color) {
+          var r = angle * Math.PI / 180;
+          return '<line x1="130" y1="102" x2="' + (130 + len * Math.sin(r)).toFixed(1) + '" y2="' + (102 - len * Math.cos(r)).toFixed(1) + '" stroke="' + color + '" stroke-width="' + wdt + '" stroke-linecap="round"/>';
+        }
+        var ticks = "";
+        for (var i = 0; i < 12; i++) {
+          var a = i * 30 * Math.PI / 180, big = i % 3 === 0;
+          ticks += '<line x1="' + (130 + 74 * Math.sin(a)).toFixed(1) + '" y1="' + (102 - 74 * Math.cos(a)).toFixed(1) + '" x2="' + (130 + (big ? 64 : 68) * Math.sin(a)).toFixed(1) + '" y2="' + (102 - (big ? 64 : 68) * Math.cos(a)).toFixed(1) + '" stroke="#7030d8" stroke-width="' + (big ? 4 : 2.4) + '" stroke-linecap="round"/>';
+        }
+        return '<svg class="art" viewBox="0 0 260 205" role="img" aria-label="A clock">' +
+          '<circle cx="130" cy="102" r="84" fill="#fff" stroke="#7030d8" stroke-width="6"/>' + ticks +
+          '<text x="130" y="48" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">12</text>' +
+          '<text x="196" y="109" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">3</text>' +
+          '<text x="130" y="172" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">6</text>' +
+          '<text x="64" y="109" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">9</text>' +
+          hand(ha, 42, 8, "#37335f") + hand(ma, 62, 5.5, "#e2603f") +
+          '<circle cx="130" cy="102" r="7" fill="#7030d8"/></svg>';
+      }
+      function artArray(rows, cols) {
+        var s = "", cell = 34, w = cols * cell + 16, h = rows * cell + 16;
+        for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+          var cx = 8 + c * cell + cell / 2, cy = 8 + r * cell + cell / 2;
+          s += '<path d="M' + cx + ' ' + (cy - 11) + 'l3.2 7 7.4.8-5.5 5 1.9 7.2L' + cx + ' ' + (cy + 7.4) + 'l-6.6 3.6 1.9-7.2-5.5-5 7.4-.8z" fill="#f59e0b" stroke="#d97706" stroke-width="1.3" stroke-linejoin="round"/>';
+        }
+        return '<svg class="art" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Rows of stars">' + s + '</svg>';
+      }
+      function artShapes() {
+        return '<svg class="art" viewBox="0 0 340 130" role="img" aria-label="Shapes">' +
+          '<polygon points="45,105 85,30 125,105" fill="#a78bfa" stroke="#7030d8" stroke-width="3.5" stroke-linejoin="round"/>' +
+          '<rect x="150" y="38" width="66" height="66" rx="5" fill="#fda4af" stroke="#e2603f" stroke-width="3.5"/>' +
+          '<circle cx="282" cy="71" r="34" fill="#fde68a" stroke="#d97706" stroke-width="3.5"/>' +
+          '<text x="85" y="124" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="12.5" fill="#7a75a8">Triangle</text>' +
+          '<text x="183" y="124" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="12.5" fill="#7a75a8">Square</text>' +
+          '<text x="282" y="124" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="12.5" fill="#7a75a8">Circle</text></svg>';
+      }
+      function artSides(n) {
+        var pts = [], cx = 130, cy = 92, R = 66;
+        for (var i = 0; i < n; i++) {
+          var a = -Math.PI / 2 + i * 2 * Math.PI / n;
+          pts.push((cx + R * Math.cos(a)).toFixed(1) + "," + (cy + R * Math.sin(a)).toFixed(1));
+        }
+        var dots = "";
+        for (i = 0; i < n; i++) {
+          var p = pts[i].split(",");
+          dots += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="#f59e0b" stroke="#fff" stroke-width="2"/>';
+        }
+        return '<svg class="art" viewBox="0 0 260 185" role="img" aria-label="A shape"><polygon points="' + pts.join(" ") + '" fill="#a78bfa" stroke="#7030d8" stroke-width="4" stroke-linejoin="round"/>' + dots + '</svg>';
+      }
+      /* ---------- art for Worlds 2-4 ---------- */
+      function artFrac(bars) {
+        var s = "", y = 12;
+        bars.forEach(function (b) {
+          var w = 205, h = 40, x = 8, seg = w / b.parts, i;
+          s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="7" fill="#efeaff" stroke="#7030d8" stroke-width="3"/>';
+          for (i = 0; i < b.filled; i++) s += '<rect x="' + (x + i * seg + 2.5) + '" y="' + (y + 2.5) + '" width="' + (seg - 5) + '" height="' + (h - 5) + '" rx="5" fill="#a78bfa"/>';
+          for (i = 1; i < b.parts; i++) s += '<line x1="' + (x + i * seg) + '" y1="' + y + '" x2="' + (x + i * seg) + '" y2="' + (y + h) + '" stroke="#7030d8" stroke-width="2.4"/>';
+          s += '<text x="' + (x + w + 12) + '" y="' + (y + 28) + '" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">' + esc(b.label) + '</text>';
+          y += h + 22;
+        });
+        return '<svg class="art" viewBox="0 0 340 ' + (y - 6) + '" role="img" aria-label="Fraction bars">' + s + '</svg>';
+      }
+      function artPie(pct, label) {
+        var cx = 118, cy = 92, r = 64;
+        var a = (pct / 100) * 2 * Math.PI;
+        var x2 = cx + r * Math.sin(a), y2 = cy - r * Math.cos(a);
+        var large = pct > 50 ? 1 : 0;
+        return '<svg class="art" viewBox="0 0 340 185" role="img" aria-label="Percent circle">' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#efeaff" stroke="#7030d8" stroke-width="3.5"/>' +
+          '<path d="M' + cx + ' ' + cy + ' L' + cx + ' ' + (cy - r) + ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + x2.toFixed(1) + ' ' + y2.toFixed(1) + ' Z" fill="#a78bfa"/>' +
+          '<text x="240" y="100" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="29" fill="#7030d8">' + esc(label) + '</text></svg>';
+      }
+      function artNumLine(min, max, marks) {
+        var x0 = 22, x1 = 318, y = 76;
+        function X(v) { return x0 + (v - min) / (max - min) * (x1 - x0); }
+        var step = (max - min) > 16 ? 2 : 1, v;
+        var s = '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="#7030d8" stroke-width="3.4" stroke-linecap="round"/>' +
+          '<path d="M' + x1 + ' ' + y + ' l-9 -5 v10 z" fill="#7030d8"/><path d="M' + x0 + ' ' + y + ' l9 -5 v10 z" fill="#7030d8"/>';
+        for (v = min; v <= max; v += step) {
+          s += '<line x1="' + X(v).toFixed(1) + '" y1="' + (y - 6) + '" x2="' + X(v).toFixed(1) + '" y2="' + (y + 6) + '" stroke="#7030d8" stroke-width="2.2"/>' +
+            '<text x="' + X(v).toFixed(1) + '" y="' + (y + 24) + '" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="11.5" fill="#7a75a8">' + String(v).replace("-", "−") + '</text>';
+        }
+        marks.forEach(function (m) {
+          s += '<circle cx="' + X(m.v).toFixed(1) + '" cy="' + y + '" r="8" fill="#f59e0b" stroke="#fff" stroke-width="2.4"/>' +
+            '<text x="' + X(m.v).toFixed(1) + '" y="' + (y - 16) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="16" fill="#b45309">' + esc(m.t) + '</text>';
+        });
+        return '<svg class="art" viewBox="0 0 340 116" role="img" aria-label="Number line">' + s + '</svg>';
+      }
+      function artFormula(lines) {
+        var big = true;
+        lines.forEach(function (t) { if (t.length > 20) big = false; });
+        var fs = big ? 30 : 23, s = "";
+        lines.forEach(function (t, i) {
+          s += '<text x="170" y="' + (42 + i * 44) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="' + fs + '" fill="#37335f">' + esc(t) + '</text>';
+        });
+        return '<svg class="art" viewBox="0 0 340 ' + (lines.length * 44 + 14) + '" role="img" aria-label="Math expression">' + s + '</svg>';
+      }
+      function artScale(left, right) {
+        return '<svg class="art" viewBox="0 0 340 178" role="img" aria-label="Balance scale">' +
+          '<line x1="60" y1="50" x2="280" y2="50" stroke="#7030d8" stroke-width="6" stroke-linecap="round"/>' +
+          '<circle cx="170" cy="50" r="8" fill="#7030d8"/>' +
+          '<path d="M170 58 L152 148 L188 148 Z" fill="#a78bfa"/>' +
+          '<rect x="118" y="148" width="104" height="12" rx="6" fill="#7030d8"/>' +
+          '<line x1="60" y1="50" x2="38" y2="94" stroke="#7a75a8" stroke-width="3"/><line x1="60" y1="50" x2="82" y2="94" stroke="#7a75a8" stroke-width="3"/>' +
+          '<line x1="280" y1="50" x2="258" y2="94" stroke="#7a75a8" stroke-width="3"/><line x1="280" y1="50" x2="302" y2="94" stroke="#7a75a8" stroke-width="3"/>' +
+          '<path d="M28 94 A32 14 0 0 0 92 94 Z" fill="#fbbf24" stroke="#d97706" stroke-width="3"/>' +
+          '<path d="M248 94 A32 14 0 0 0 312 94 Z" fill="#fbbf24" stroke="#d97706" stroke-width="3"/>' +
+          '<text x="60" y="86" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="18" fill="#37335f">' + esc(left) + '</text>' +
+          '<text x="280" y="86" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="18" fill="#37335f">' + esc(right) + '</text></svg>';
+      }
+      function artGrid(o) {
+        var px0 = 48, px1 = 324, py0 = 158, py1 = 14, i;
+        function X(v) { return px0 + v / o.xMax * (px1 - px0); }
+        function Y(v) { return py0 - v / o.yMax * (py0 - py1); }
+        var s = "";
+        for (i = 0; i <= o.xMax; i++) s += '<line x1="' + X(i).toFixed(1) + '" y1="' + py0 + '" x2="' + X(i).toFixed(1) + '" y2="' + py1 + '" stroke="#ddd3ff" stroke-width="1.4"/>';
+        for (i = 0; i <= o.yMax; i++) s += '<line x1="' + px0 + '" y1="' + Y(i).toFixed(1) + '" x2="' + px1 + '" y2="' + Y(i).toFixed(1) + '" stroke="#ddd3ff" stroke-width="1.4"/>';
+        s += '<line x1="' + px0 + '" y1="' + py1 + '" x2="' + px0 + '" y2="' + py0 + '" stroke="#7030d8" stroke-width="3"/>' +
+          '<line x1="' + px0 + '" y1="' + py0 + '" x2="' + px1 + '" y2="' + py0 + '" stroke="#7030d8" stroke-width="3"/>' +
+          '<text x="' + (px1 - 2) + '" y="' + (py0 + 18) + '" text-anchor="end" font-family="Baloo 2" font-weight="800" font-size="14" fill="#7a75a8">x</text>' +
+          '<text x="' + (px0 - 11) + '" y="' + (py1 + 5) + '" font-family="Baloo 2" font-weight="800" font-size="14" fill="#7a75a8">y</text>';
+        if (o.line) s += '<line x1="' + X(o.line[0]).toFixed(1) + '" y1="' + Y(o.line[1]).toFixed(1) + '" x2="' + X(o.line[2]).toFixed(1) + '" y2="' + Y(o.line[3]).toFixed(1) + '" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/>';
+        (o.dots || []).forEach(function (d) {
+          s += '<circle cx="' + X(d[0]).toFixed(1) + '" cy="' + Y(d[1]).toFixed(1) + '" r="6" fill="#f59e0b" stroke="#fff" stroke-width="2.2"/>' +
+            '<text x="' + (X(d[0]) + 10).toFixed(1) + '" y="' + (Y(d[1]) - 8).toFixed(1) + '" font-family="Baloo 2" font-weight="800" font-size="14" fill="#b45309">' + esc(d[2]) + '</text>';
+        });
+        return '<svg class="art" viewBox="0 0 340 184" role="img" aria-label="Coordinate grid">' + s + '</svg>';
+      }
+      function artCurve(type) {
+        var axes = '<line x1="52" y1="160" x2="322" y2="160" stroke="#7030d8" stroke-width="3"/>' +
+          '<line x1="52" y1="160" x2="52" y2="16" stroke="#7030d8" stroke-width="3"/>' +
+          '<path d="M322 160 l-9 -4.5 v9 z" fill="#7030d8"/><path d="M52 16 l-4.5 9 h9 z" fill="#7030d8"/>' +
+          '<text x="318" y="178" text-anchor="end" font-family="Baloo 2" font-weight="800" font-size="14" fill="#7a75a8">x</text>' +
+          '<text x="38" y="22" font-family="Baloo 2" font-weight="800" font-size="14" fill="#7a75a8">y</text>';
+        var body = "";
+        if (type === "parabola") {
+          body = '<path d="M96 26 Q192 276 288 26" fill="none" stroke="#f43f5e" stroke-width="4.5" stroke-linecap="round"/>';
+        } else if (type === "tangent") {
+          body = '<path d="M96 26 Q192 276 288 26" fill="none" stroke="#a78bfa" stroke-width="4.5" stroke-linecap="round"/>' +
+            '<line x1="210" y1="159" x2="290" y2="55" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/>' +
+            '<circle cx="240" cy="120" r="6.5" fill="#f59e0b" stroke="#fff" stroke-width="2.2"/>';
+        } else if (type === "area") {
+          body = '<polygon points="66,160 292,44 292,160" fill="#a78bfa" opacity="0.4"/>' +
+            '<line x1="66" y1="160" x2="292" y2="44" stroke="#7030d8" stroke-width="4.5" stroke-linecap="round"/>' +
+            '<text x="232" y="140" font-family="Baloo 2" font-weight="800" font-size="17" fill="#5724b3">area</text>';
+        } else {
+          body = '<line x1="60" y1="152" x2="318" y2="152" stroke="#f59e0b" stroke-width="2.6" stroke-dasharray="7 6"/>' +
+            '<path d="M84 22 Q118 138 306 146" fill="none" stroke="#f43f5e" stroke-width="4.5" stroke-linecap="round"/>';
+        }
+        return '<svg class="art" viewBox="0 0 340 190" role="img" aria-label="A curve on axes">' + axes + body + '</svg>';
+      }
+      function artTri(o) {
+        var s = '<polygon points="70,150 70,46 262,150" fill="#a78bfa" fill-opacity="0.35" stroke="#7030d8" stroke-width="4" stroke-linejoin="round"/>' +
+          '<path d="M70 132 L88 132 L88 150" fill="none" stroke="#7030d8" stroke-width="2.6"/>';
+        if (o.angle) s += '<path d="M234 150 A28 28 0 0 1 237.4 136.7" fill="none" stroke="#f43f5e" stroke-width="3"/>' +
+          '<text x="213" y="147" font-family="Baloo 2" font-weight="800" font-size="17" fill="#f43f5e">θ</text>';
+        s += '<text x="80" y="103" font-family="Baloo 2" font-weight="800" font-size="16" fill="#37335f">' + esc(o.left) + '</text>' +
+          '<text x="166" y="172" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="16" fill="#37335f">' + esc(o.bottom) + '</text>' +
+          '<text x="172" y="88" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="16" fill="#37335f" transform="rotate(28.5 172 88)">' + esc(o.hyp) + '</text>';
+        return '<svg class="art" viewBox="0 0 340 186" role="img" aria-label="Right triangle">' + s + '</svg>';
+      }
+      function artAngle(o) {
+        return '<svg class="art" viewBox="0 0 340 190" role="img" aria-label="A triangle with labeled angles">' +
+          '<polygon points="60,150 170,40 280,150" fill="#a78bfa" fill-opacity="0.35" stroke="#7030d8" stroke-width="4" stroke-linejoin="round"/>' +
+          '<text x="54" y="174" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">' + esc(o.a) + '</text>' +
+          '<text x="170" y="28" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">' + esc(o.b) + '</text>' +
+          '<text x="286" y="174" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#37335f">' + esc(o.c) + '</text></svg>';
+      }
+      function artDice(n) {
+        var P = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] };
+        var s = "";
+        (P[n] || P[1]).forEach(function (p) { s += '<circle cx="' + (130 + p[0] * 26) + '" cy="' + (95 + p[1] * 26) + '" r="10" fill="#7030d8"/>'; });
+        return '<svg class="art" viewBox="0 0 260 190" role="img" aria-label="A die"><rect x="62" y="27" width="136" height="136" rx="24" fill="#ffffff" stroke="#7030d8" stroke-width="5"/>' + s + '</svg>';
+      }
+      function artSpinner(total, colored) {
+        var cx = 130, cy = 95, r = 70, s = "";
+        for (var i = 0; i < total; i++) {
+          var a1 = (i / total) * 2 * Math.PI - Math.PI / 2, a2 = ((i + 1) / total) * 2 * Math.PI - Math.PI / 2;
+          s += '<path d="M' + cx + ' ' + cy + ' L' + (cx + r * Math.cos(a1)).toFixed(1) + ' ' + (cy + r * Math.sin(a1)).toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r * Math.cos(a2)).toFixed(1) + ' ' + (cy + r * Math.sin(a2)).toFixed(1) + ' Z" fill="' + (i < colored ? "#4ade80" : "#efeaff") + '" stroke="#7030d8" stroke-width="2.6"/>';
+        }
+        s += '<circle cx="' + cx + '" cy="' + cy + '" r="7" fill="#7030d8"/>';
+        return '<svg class="art" viewBox="0 0 260 190" role="img" aria-label="A spinner">' + s + '</svg>';
+      }
+      function artMarbles(colors) {
+        var s = '<rect x="66" y="26" width="208" height="142" rx="28" fill="#f4f0ff" stroke="#7030d8" stroke-width="3.6"/>';
+        colors.forEach(function (c, i) {
+          var row = Math.floor(i / 3), col = i % 3, inRow = Math.min(3, colors.length - row * 3);
+          var cx = 170 + (col - (inRow - 1) / 2) * 56, cy = 74 + row * 52;
+          s += '<circle cx="' + cx + '" cy="' + cy + '" r="19" fill="' + c + '" stroke="rgba(0,0,0,0.15)" stroke-width="2"/><circle cx="' + (cx - 6) + '" cy="' + (cy - 6) + '" r="5.5" fill="rgba(255,255,255,0.55)"/>';
+        });
+        return '<svg class="art" viewBox="0 0 340 190" role="img" aria-label="Marbles in a bag">' + s + '</svg>';
+      }
+      function artBars(data) {
+        var max = Math.max.apply(null, data), n = data.length;
+        var bw = Math.min(44, 240 / n), gap = (300 - bw * n) / (n + 1);
+        var s = '<line x1="30" y1="152" x2="322" y2="152" stroke="#7030d8" stroke-width="3"/>';
+        data.forEach(function (v, i) {
+          var h = 12 + (v / max) * 116, x = 30 + gap + i * (bw + gap), y = 152 - h;
+          s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" rx="6" fill="#a78bfa" stroke="#7030d8" stroke-width="2.4"/>' +
+            '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (y - 7).toFixed(1) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="16" fill="#37335f">' + v + '</text>';
+        });
+        return '<svg class="art" viewBox="0 0 340 172" role="img" aria-label="Bar chart">' + s + '</svg>';
+      }
+      function oneMatrix(m, highlight) {
+        var rows = m.length, cols = m[0].length, cw = 38, ch = 38, s = "";
+        var w = cols * cw, h = rows * ch;
+        s += '<path d="M8 0 L0 0 L0 ' + h + ' L8 ' + h + '" fill="none" stroke="#7030d8" stroke-width="3.4"/>' +
+          '<path d="M' + (w - 8) + ' 0 L' + w + ' 0 L' + w + ' ' + h + ' L' + (w - 8) + ' ' + h + '" fill="none" stroke="#7030d8" stroke-width="3.4"/>';
+        for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+          var cxp = c * cw + cw / 2, cyp = r * ch + ch / 2;
+          if (highlight && highlight[0] === r && highlight[1] === c) s += '<circle cx="' + cxp + '" cy="' + cyp + '" r="17" fill="#fde68a" stroke="#d97706" stroke-width="2.4"/>';
+          s += '<text x="' + cxp + '" y="' + (cyp + 7) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="20" fill="#37335f">' + m[r][c] + '</text>';
+        }
+        return { svg: s, w: w, h: h };
+      }
+      function artMatrix(o) {
+        var y = 54;
+        var A = oneMatrix(o.a, o.highlight);
+        var total = A.w, B = null;
+        if (o.b) { B = oneMatrix(o.b, o.highlight); total += 40 + B.w; }
+        var x = (340 - total) / 2;
+        var s = '<g transform="translate(' + x.toFixed(1) + ',' + y + ')">' + A.svg + '</g>';
+        if (B) {
+          s += '<text x="' + (x + A.w + 20).toFixed(1) + '" y="' + (y + A.h / 2 + 9) + '" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="28" fill="#7030d8">' + esc(o.op || "+") + '</text>' +
+            '<g transform="translate(' + (x + A.w + 40).toFixed(1) + ',' + y + ')">' + B.svg + '</g>';
+        }
+        return '<svg class="art" viewBox="0 0 340 190" role="img" aria-label="A matrix">' + s + '</svg>';
+      }
+
+      function renderArt(art) {
+        if (!art) return "";
+        switch (art.kind) {
+          case "twin": return artTwin(art.stage || 0);
+          case "rectTwin": return artRectTwin(art.stage || 0);
+          case "halves": return artHalves();
+          case "blocks": return artBlocks(art.groups);
+          case "place": return artPlaceValue(art.tens, art.ones);
+          case "skip": return artSkip(art.nums, art.word || "skip counting");
+          case "coins": return artCoins(art.coins);
+          case "clock": return artClock(art.h, art.m);
+          case "array": return artArray(art.rows, art.cols);
+          case "shapes": return artShapes();
+          case "sides": return artSides(art.n);
+          case "frac": return artFrac(art.bars);
+          case "pie": return artPie(art.pct, art.label);
+          case "numline": return artNumLine(art.min, art.max, art.marks || []);
+          case "formula": return artFormula(art.lines);
+          case "scale": return artScale(art.left, art.right);
+          case "grid": return artGrid(art);
+          case "curve": return artCurve(art.type);
+          case "tri": return artTri(art);
+          case "angle": return artAngle(art);
+          case "dice": return artDice(art.n);
+          case "spinner": return artSpinner(art.total, art.colored);
+          case "marbles": return artMarbles(art.colors);
+          case "bars": return artBars(art.data);
+          case "matrix": return artMatrix(art);
+          default: return "";
+        }
+      }
+
+
+      /* ---------- lesson icons for the map ---------- */
+      function lessonIcon(name) {
+        var p = {
+          shapes: '<polygon points="22,34 33,12 44,34" fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/><rect x="8" y="24" width="17" height="17" rx="3" fill="none" stroke="#fff" stroke-width="3.4"/>',
+          plus: '<path d="M24 10v28M10 24h28" stroke="#fff" stroke-width="6" stroke-linecap="round"/>',
+          minus: '<path d="M10 24h28" stroke="#fff" stroke-width="6" stroke-linecap="round"/>',
+          blocks: '<rect x="9" y="9" width="9" height="30" rx="2.5" fill="#fff"/><rect x="22" y="9" width="9" height="30" rx="2.5" fill="#fff" opacity="0.75"/><rect x="35" y="28" width="11" height="11" rx="2.5" fill="#fff"/>',
+          skip: '<text x="24" y="21" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="14" fill="#fff">2·4</text><text x="24" y="39" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="14" fill="#fff">6·8</text>',
+          coins: '<circle cx="24" cy="24" r="14" fill="none" stroke="#fff" stroke-width="3.6"/><text x="24" y="30" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="16" fill="#fff">¢</text>',
+          clock: '<circle cx="24" cy="24" r="15" fill="none" stroke="#fff" stroke-width="3.6"/><path d="M24 15v9l6.5 4" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>',
+          array: '<circle cx="14" cy="14" r="4.4" fill="#fff"/><circle cx="24" cy="14" r="4.4" fill="#fff"/><circle cx="34" cy="14" r="4.4" fill="#fff"/><circle cx="14" cy="24" r="4.4" fill="#fff"/><circle cx="24" cy="24" r="4.4" fill="#fff"/><circle cx="34" cy="24" r="4.4" fill="#fff"/><circle cx="14" cy="34" r="4.4" fill="#fff"/><circle cx="24" cy="34" r="4.4" fill="#fff"/><circle cx="34" cy="34" r="4.4" fill="#fff"/>',
+          frac: '<circle cx="24" cy="24" r="15" fill="none" stroke="#fff" stroke-width="3.4"/><path d="M24 9a15 15 0 0 1 0 30z" fill="#fff"/>',
+          pct: '<text x="24" y="33" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="22" fill="#fff">%</text>',
+          ratio: '<text x="24" y="31" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="17" fill="#fff">2:3</text>',
+          neg: '<text x="24" y="33" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="19" fill="#fff">−5</text>',
+          oop: '<text x="24" y="32" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="17" fill="#fff">()×</text>',
+          eq: '<text x="24" y="34" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="23" fill="#fff">x</text>',
+          algx: '<text x="24" y="32" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="18" fill="#fff">3x</text>',
+          lin: '<path d="M10 38 L38 12" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M10 38 H40M10 38 V8" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.65"/>',
+          quad: '<path d="M10 10 Q24 42 38 10" fill="none" stroke="#fff" stroke-width="3.8" stroke-linecap="round"/>',
+          expo: '<text x="24" y="32" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="18" fill="#fff">x²</text>',
+          geo: '<polygon points="12,37 24,13 37,37" fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/><path d="M12 31h6v6" fill="none" stroke="#fff" stroke-width="2.6"/>',
+          prob: '<rect x="11" y="11" width="26" height="26" rx="6" fill="none" stroke="#fff" stroke-width="3.4"/><circle cx="18.5" cy="18.5" r="2.8" fill="#fff"/><circle cx="29.5" cy="18.5" r="2.8" fill="#fff"/><circle cx="18.5" cy="29.5" r="2.8" fill="#fff"/><circle cx="29.5" cy="29.5" r="2.8" fill="#fff"/>',
+          func: '<text x="24" y="32" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="16" fill="#fff">f(x)</text>',
+          trig: '<polygon points="10,36 38,36 38,14" fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/>',
+          logs: '<text x="24" y="31" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="15" fill="#fff">log</text>',
+          limits: '<text x="24" y="35" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="25" fill="#fff">∞</text>',
+          deriv: '<path d="M8 12 Q24 40 40 12" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><line x1="14" y1="35" x2="38" y2="17" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>',
+          integ: '<text x="24" y="35" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="25" fill="#fff">∫</text>',
+          stats: '<rect x="11" y="24" width="7" height="14" fill="#fff"/><rect x="20.5" y="15" width="7" height="23" fill="#fff"/><rect x="30" y="20" width="7" height="18" fill="#fff"/>',
+          matrix: '<rect x="11" y="11" width="11" height="11" fill="#fff"/><rect x="26" y="11" width="11" height="11" fill="#fff" opacity="0.7"/><rect x="11" y="26" width="11" height="11" fill="#fff" opacity="0.7"/><rect x="26" y="26" width="11" height="11" fill="#fff"/>'
+        };
+        return '<svg viewBox="0 0 48 48" aria-hidden="true">' + (p[name] || p.plus) + '</svg>';
+      }
+
+      /* ---------- the lessons (2nd grade) ---------- */
+      var LESSONS = [
+        {
+          id: "twin", title: "The Twin Trick", icon: "shapes", color: "#8b5cf6", badge: "Twin Trick Star",
+          steps: [
+            { say: "Hi! I'm Gelli the cat, and I know a shape trick that will blow your mind. See this triangle? It's hiding a secret!",
+              art: { kind: "twin", stage: 0 }, btn: "Show me the trick!" },
+            { q: "This triangle is exactly HALF of a square. What happens if its twin shows up?",
+              say: "Every triangle has a twin — an exact copy. If the twin flips over and snuggles in, what shape do they make together?",
+              art: { kind: "twin", stage: 0 },
+              choices: ["A square", "A circle", "A star"], answer: 0,
+              aha: "Two twin triangles fit together perfectly — no gaps, no overlaps — to make one whole square!" },
+            { say: "Ta-da! Here comes the twin… and look! Together they make ONE whole square. The line down the middle shows the two halves.",
+              art: { kind: "twin", stage: 2 }, btn: "Wow! Keep going" },
+            { q: "How many triangles fit inside the whole square?",
+              say: "Count the triangles inside the square. One… and its twin…",
+              art: { kind: "twin", stage: 2 },
+              choices: ["2", "3", "4"], answer: 0,
+              aha: "Just 2! Each triangle is one half of the square — ½ + ½ makes a whole." },
+            { q: "Each part of this circle is the same size. What is each part called?",
+              say: "When a whole is split into 2 equal parts, each part has a special name. What is it?",
+              art: { kind: "halves" },
+              choices: ["One half", "One third", "One piece of pie"], answer: 0,
+              aha: "One half! Two halves that are exactly the same size always make one whole." },
+            { q: "Look — the twins made a rectangle this time! Each triangle is what part of the rectangle?",
+              say: "The twin trick works on rectangles too. The rectangle is the whole. What part is each triangle?",
+              art: { kind: "rectTwin", stage: 1 },
+              choices: ["One half", "One fourth", "The whole thing"], answer: 0,
+              aha: "One half again! Any shape split into 2 equal parts has halves — that's the twin trick!" }
+          ]
+        },
+        {
+          id: "add", title: "Adding Adventure", icon: "plus", color: "#38bdf8", badge: "Adding Ace",
+          steps: [
+            { say: "Time to add! Here's my secret: add the tens first, then the ones. The blocks will help us. Ready, explorer?",
+              art: { kind: "blocks", groups: [{ t: 2, o: 3 }, { t: 1, o: 4 }] }, btn: "Let's add!" },
+            { q: "What is 34 + 25?",
+              say: "Tens first: 3 tens + 2 tens = 5 tens. Ones next: 4 + 5 = 9. Now put it together!",
+              art: { kind: "blocks", groups: [{ t: 3, o: 4 }, { t: 2, o: 5 }] },
+              choices: ["59", "69", "519"], answer: 0,
+              aha: "34 + 25 = 59. Five tens and nine ones — adding tens first makes big numbers easy!" },
+            { q: "What is 47 + 8?",
+              say: "Watch the ones: 7 + 8 = 15. That's 1 new ten and 5 ones! So 4 tens become 5 tens, plus 5 ones.",
+              art: { kind: "blocks", groups: [{ t: 4, o: 7 }, { t: 0, o: 8 }] },
+              choices: ["55", "54", "515"], answer: 0,
+              aha: "47 + 8 = 55. When the ones reach 10 or more, they trade up into a new ten!" },
+            { q: "Gelli found 28 shiny shells. Then she found 31 more. How many shells now?",
+              say: "It's the same adding — 28 + 31. Tens: 2 + 3 = 5 tens. Ones: 8 + 1 = 9 ones.",
+              art: { kind: "blocks", groups: [{ t: 2, o: 8 }, { t: 3, o: 1 }] },
+              choices: ["59", "49", "69"], answer: 0,
+              aha: "28 + 31 = 59 shells. Word problems are just adding in a costume!" },
+            { q: "Last one, superstar: what is 63 + 27?",
+              say: "Tens: 6 + 2 = 8 tens. Ones: 3 + 7 = 10 ones — uh oh, 10 ones trade into 1 more ten!",
+              art: { kind: "blocks", groups: [{ t: 6, o: 3 }, { t: 2, o: 7 }] },
+              choices: ["90", "80", "810"], answer: 0,
+              aha: "63 + 27 = 90. Eight tens plus the traded ten makes 9 tens — and zero ones left over!" }
+          ]
+        },
+        {
+          id: "sub", title: "Subtraction Safari", icon: "minus", color: "#34d399", badge: "Subtraction Star",
+          steps: [
+            { say: "Welcome to the safari! Subtracting means taking away. We'll cross out the blocks we take. Brave explorers, let's go!",
+              art: { kind: "blocks", groups: [{ t: 5, o: 6 }] }, btn: "Let's explore!" },
+            { q: "What is 56 − 24?",
+              say: "Take away 2 tens and 4 ones. Count what's left: 3 tens and 2 ones.",
+              art: { kind: "blocks", groups: [{ t: 5, o: 6, op: "−" }, { t: 2, o: 4 }] },
+              choices: ["32", "42", "30"], answer: 0,
+              aha: "56 − 24 = 32. Take away tens, take away ones, count the rest!" },
+            { q: "What is 42 − 18?",
+              say: "Tricky one! We only have 2 ones but need to take 8. Trade one ten for 10 ones — now we have 12 ones. 12 − 8 = 4, and 3 tens − 1 ten = 2 tens.",
+              art: { kind: "blocks", groups: [{ t: 4, o: 2, op: "−" }, { t: 1, o: 8 }] },
+              choices: ["24", "34", "26"], answer: 0,
+              aha: "42 − 18 = 24. Trading a ten for ones is the safari survival trick!" },
+            { q: "There were 73 birds in the tree. 45 flew away. How many are left?",
+              say: "73 − 45. Trade a ten: 13 − 5 = 8 ones. Then 6 tens − 4 tens = 2 tens.",
+              art: { kind: "blocks", groups: [{ t: 7, o: 3, op: "−" }, { t: 4, o: 5 }] },
+              choices: ["28", "38", "32"], answer: 0,
+              aha: "73 − 45 = 28 birds left in the tree." },
+            { q: "Final safari challenge: what is 90 − 36?",
+              say: "Zero ones! Trade a ten first: 10 − 6 = 4 ones. Then 8 tens − 3 tens = 5 tens.",
+              art: { kind: "blocks", groups: [{ t: 9, o: 0, op: "−" }, { t: 3, o: 6 }] },
+              choices: ["54", "64", "56"], answer: 0,
+              aha: "90 − 36 = 54. You handled the zero like a true safari guide!" }
+          ]
+        },
+        {
+          id: "place", title: "Place Value Power", icon: "blocks", color: "#f472b6", badge: "Place Value Pro",
+          steps: [
+            { say: "Numbers wear their value in their place! The digit on the left counts TENS. The digit on the right counts ONES. Watch the chart!",
+              art: { kind: "place", tens: 4, ones: 7 }, btn: "Got it!" },
+            { q: "What number do these blocks show?",
+              say: "Count the tens rods first… 4 tens. Then the ones cubes… 7 ones. What number is 4 tens and 7 ones?",
+              art: { kind: "place", tens: 4, ones: 7 },
+              choices: ["47", "74", "407"], answer: 0,
+              aha: "47! Four tens make 40, plus 7 ones makes 47." },
+            { q: "In the number 63, how many TENS are there?",
+              say: "Find the tens place — it's the digit on the left, the first one you read.",
+              art: { kind: "place", tens: 6, ones: 3 },
+              choices: ["6 tens", "3 tens", "63 tens"], answer: 0,
+              aha: "6 tens! The 6 in 63 is worth 60 — that's the power of place." },
+            { q: "Which number has 5 tens and 2 ones?",
+              say: "Tens digit first, ones digit second. Five… then two…",
+              art: { kind: "place", tens: 5, ones: 2 },
+              choices: ["52", "25", "502"], answer: 0,
+              aha: "52! Tens on the left, ones on the right — every time." },
+            { q: "How much is the 8 worth in 84?",
+              say: "The 8 sits in the tens place. So it's not just 8 — it's 8 tens!",
+              art: { kind: "place", tens: 8, ones: 4 },
+              choices: ["80", "8", "800"], answer: 0,
+              aha: "80! A digit's place tells you its power. The 8 in 84 is worth 80." }
+          ]
+        },
+        {
+          id: "skip", title: "Skip Count Parade", icon: "skip", color: "#fb923c", badge: "Skip Count Champ",
+          steps: [
+            { say: "Welcome to the parade! We don't count every stone — we HOP over them in equal jumps. Counting by 2s sounds like this: 2, 4, 6, 8… feel the rhythm?",
+              art: { kind: "skip", nums: [2, 4, 6, 8], word: "counting by 2s" }, btn: "Let's hop!" },
+            { q: "Counting by 2s: 2, 4, 6, … what comes next?",
+              say: "Hop one more jump of 2. Six plus 2 is…?",
+              art: { kind: "skip", nums: [2, 4, 6, null], word: "counting by 2s" },
+              choices: ["8", "7", "10"], answer: 0,
+              aha: "8! Every hop adds 2. 2, 4, 6, 8 — the parade marches on!" },
+            { q: "Now by 5s: 5, 10, 15, … what comes next?",
+              say: "Bigger hops now — each jump adds 5. Fifteen plus 5 is…?",
+              art: { kind: "skip", nums: [5, 10, 15, null], word: "counting by 5s" },
+              choices: ["20", "16", "25"], answer: 0,
+              aha: "20! Counting by 5s is perfect for nickels and fingers — 5, 10, 15, 20!" },
+            { q: "Giant hops by 10s: 30, 40, 50, … what comes next?",
+              say: "Tens are the easiest hops of all. Only the tens digit changes!",
+              art: { kind: "skip", nums: [30, 40, 50, null], word: "counting by 10s" },
+              choices: ["60", "51", "55"], answer: 0,
+              aha: "60! 30, 40, 50, 60 — by 10s, the ones always stay zero." },
+            { q: "Parade finale — by 2s again: 12, 14, 16, … what comes next?",
+              say: "Keep the rhythm: each stone is 2 more than the one before. Sixteen plus 2!",
+              art: { kind: "skip", nums: [12, 14, 16, null], word: "counting by 2s" },
+              choices: ["18", "17", "20"], answer: 0,
+              aha: "18! You kept the beat all the way. 12, 14, 16, 18!" }
+          ]
+        },
+        {
+          id: "coins", title: "Coin Quest", icon: "coins", color: "#facc15", badge: "Coin Collector",
+          steps: [
+            { say: "Ahoy, treasure hunter! Four coins to know: a penny is 1 cent, a nickel is 5, a dime is 10, and a quarter is 25. Let's hunt!",
+              art: { kind: "coins", coins: ["penny", "nickel", "dime", "quarter"] }, btn: "Start the quest!" },
+            { q: "How many cents is a dime worth?",
+              say: "The dime is the smallest coin, but it's worth more than a nickel! Remember our coin lineup…",
+              art: { kind: "coins", coins: ["dime"] },
+              choices: ["10¢", "5¢", "25¢"], answer: 0,
+              aha: "10 cents! Small coin, mighty value — a dime is 10¢." },
+            { q: "What are a quarter and a penny worth together?",
+              say: "Add them up: the quarter is 25¢, the penny is 1¢. 25 + 1 = ?",
+              art: { kind: "coins", coins: ["quarter", "penny"] },
+              choices: ["26¢", "30¢", "16¢"], answer: 0,
+              aha: "26¢! Start with the biggest coin, then count on the little ones." },
+            { q: "Count this treasure: a dime, a nickel, and a penny.",
+              say: "Start big: dime is 10. Count on by 5s for the nickel: 15. Then the penny: 16!",
+              art: { kind: "coins", coins: ["dime", "nickel", "penny"] },
+              choices: ["16¢", "15¢", "21¢"], answer: 0,
+              aha: "16¢! Biggest coin first, then count on — that's the treasure hunter's way." },
+            { q: "Final treasure: two dimes and a nickel. How much?",
+              say: "Skip count the dimes by 10s: 10, 20. Now add the nickel's 5…",
+              art: { kind: "coins", coins: ["dime", "dime", "nickel"] },
+              choices: ["25¢", "20¢", "30¢"], answer: 0,
+              aha: "25¢ — exactly one quarter's worth, made from three coins!" }
+          ]
+        },
+        {
+          id: "time", title: "Telling Time", icon: "clock", color: "#60a5fa", badge: "Time Teller",
+          steps: [
+            { say: "Tick tock! The SHORT hand tells the hour. The LONG hand tells the minutes. When the long hand points straight up at 12, it's exactly o'clock!",
+              art: { kind: "clock", h: 3, m: 0 }, btn: "Let's tell time!" },
+            { q: "What time does this clock show?",
+              say: "Short hand first: it points at 3. Long hand points up at 12 — that's o'clock!",
+              art: { kind: "clock", h: 3, m: 0 },
+              choices: ["3 o'clock", "12 o'clock", "6 o'clock"], answer: 0,
+              aha: "3 o'clock! Short hand on the 3, long hand on the 12." },
+            { q: "Now the long hand points DOWN at the 6. What time is it?",
+              say: "When the long hand points at 6, 30 minutes have passed — it's half past the hour. The short hand is halfway to 8, so we just passed 7…",
+              art: { kind: "clock", h: 7, m: 30 },
+              choices: ["Half past 7", "Half past 6", "7 o'clock"], answer: 0,
+              aha: "Half past 7 — also written 7:30. The long hand at 6 means 30 minutes!" },
+            { q: "What time is it now?",
+              say: "Short hand is just past 11. Long hand points up… o'clock time!",
+              art: { kind: "clock", h: 11, m: 0 },
+              choices: ["11 o'clock", "12 o'clock", "1 o'clock"], answer: 0,
+              aha: "11 o'clock! You read both hands like a clock champion." },
+            { q: "Last tick: what time does this clock show?",
+              say: "Long hand on the 6 means half past. Short hand is halfway between 4 and 5, so the hour we passed is 4.",
+              art: { kind: "clock", h: 4, m: 30 },
+              choices: ["Half past 4", "Half past 5", "4 o'clock"], answer: 0,
+              aha: "Half past 4 — 4:30! Half past means the hour is half done." }
+          ]
+        },
+        {
+          id: "array", title: "Array Garden", icon: "array", color: "#4ade80", badge: "Array Ace",
+          steps: [
+            { say: "Welcome to my star garden! Stars planted in neat rows and columns are called an ARRAY. Arrays turn counting into a superpower.",
+              art: { kind: "array", rows: 3, cols: 4 }, btn: "Let's grow!" },
+            { q: "How many stars are in this garden?",
+              say: "Count row by row: there are 3 rows, and each row has 4 stars. 4 + 4 + 4 = ?",
+              art: { kind: "array", rows: 3, cols: 4 },
+              choices: ["12", "7", "14"], answer: 0,
+              aha: "12 stars! 3 rows of 4. Adding the same number over and over is array magic." },
+            { q: "This garden has 2 rows of 5. How many stars?",
+              say: "Skip count by 5s — one count for each row: 5… 10!",
+              art: { kind: "array", rows: 2, cols: 5 },
+              choices: ["10", "7", "25"], answer: 0,
+              aha: "10 stars! 2 rows of 5 — and skip counting by 5s counted them in a flash." },
+            { q: "How many sides does this shape have?",
+              say: "Count the sides — follow the orange dots around the corners. This shape is a pentagon!",
+              art: { kind: "sides", n: 5 },
+              choices: ["5 sides", "4 sides", "6 sides"], answer: 0,
+              aha: "5 sides! Penta means five. A stop-sign shape has 8 — that's an octagon!" },
+            { q: "Final garden: 4 rows of 3 stars. How many in all?",
+              say: "Add the rows: 3 + 3 + 3 + 3. Or skip count by 3s: 3, 6, 9…",
+              art: { kind: "array", rows: 4, cols: 3 },
+              choices: ["12", "7", "43"], answer: 0,
+              aha: "12 again! 4 rows of 3 and 3 rows of 4 both make 12 — arrays can turn and stay the same!" }
+          ]
+        }
+      ];
+
+      /* ---------- Worlds 2-4 lessons: Middle School, High School, College ---------- */
+      var NEW_LESSONS = {
+w2: [
+  {
+    id: "frac", title: "Fraction Deep-Dive", icon: "frac", color: "#e879f9", badge: "Fraction Master",
+    steps: [
+      { say: "Welcome to Middle School! Fractions grow up here. The top number is the numerator, the bottom is the denominator — and equivalent fractions are the same amount wearing different numbers.",
+        art: { kind: "frac", bars: [{ parts: 2, filled: 1, label: "1/2" }, { parts: 4, filled: 2, label: "2/4" }] }, btn: "Let's dive in!" },
+      { q: "Which fraction is equal to 1/2?",
+        say: "Multiply the top and bottom of one half by the same number and the amount stays the same. Which choice did exactly that?",
+        art: { kind: "frac", bars: [{ parts: 2, filled: 1, label: "1/2" }, { parts: 4, filled: 2, label: "?" }] },
+        choices: ["2/4", "1/3", "2/3"], answer: 0,
+        aha: "2/4! Doubling the top and bottom keeps the same amount — 2/4 and 1/2 shade exactly the same part of the bar." },
+      { q: "Which is bigger: 3/4 or 5/8?",
+        say: "Turn 3/4 into eighths: multiply the top and bottom by 2 and it becomes 6/8. Now compare 6/8 with 5/8.",
+        art: { kind: "frac", bars: [{ parts: 8, filled: 6, label: "3/4 = 6/8" }, { parts: 8, filled: 5, label: "5/8" }] },
+        choices: ["3/4", "5/8", "They are equal"], answer: 0,
+        aha: "3/4! Written as 6/8 it beats 5/8. Matching denominators make comparing easy." },
+      { q: "What is 1/3 + 1/6?",
+        say: "Make the pieces match first: 1/3 is the same as 2/6. Now add 2/6 + 1/6.",
+        art: { kind: "frac", bars: [{ parts: 6, filled: 2, label: "1/3 = 2/6" }, { parts: 6, filled: 1, label: "1/6" }] },
+        choices: ["1/2", "2/9", "1/4"], answer: 0,
+        aha: "1/2! 2/6 + 1/6 = 3/6, and 3/6 simplifies to 1/2." },
+      { q: "What is 7/8 − 3/8?",
+        say: "Same denominator, so just subtract the tops: 7 minus 3, over 8.",
+        art: { kind: "frac", bars: [{ parts: 8, filled: 7, label: "7/8" }, { parts: 8, filled: 3, label: "take away 3/8" }] },
+        choices: ["1/2", "4/0", "10/8"], answer: 0,
+        aha: "1/2! 7/8 − 3/8 = 4/8, which simplifies to 1/2. The denominator never gets subtracted." }
+    ]
+  },
+  {
+    id: "decpct", title: "Decimals & Percents", icon: "pct", color: "#14b8a6", badge: "Percent Pro",
+    steps: [
+      { say: "Percents are fractions out of 100, and decimals are their close cousins. 0.5, one half, and 50% are all the same amount in different outfits.",
+        art: { kind: "pie", pct: 50, label: "50%" }, btn: "Let's convert!" },
+      { q: "What is 0.75 as a percent?",
+        say: "To turn a decimal into a percent, move the decimal point two places to the right.",
+        art: { kind: "pie", pct: 75, label: "0.75" },
+        choices: ["75%", "7.5%", "0.75%"], answer: 0,
+        aha: "75%! The decimal point hops two places right: 0.75 becomes 75%." },
+      { q: "What is 20% of 60?",
+        say: "Start with 10%: 10% of 60 is 6. Now double it to get 20%.",
+        art: { kind: "formula", lines: ["20% of 60 = ?"] },
+        choices: ["12", "20", "6"], answer: 0,
+        aha: "12! Find 10% first — just divide by 10 — then scale up. 20% of 60 is 12." },
+      { q: "Which is the biggest: 0.4, 0.35, or 38%?",
+        say: "Put them all in the same outfit: 38% is 0.38 as a decimal. Now compare 0.4, 0.35, and 0.38.",
+        art: { kind: "formula", lines: ["0.4   0.35   38%"] },
+        choices: ["0.4", "0.35", "38%"], answer: 0,
+        aha: "0.4! It is really 0.40, which beats 0.38 and 0.35." },
+      { q: "An $80 game is 25% off. How much money do you save?",
+        say: "25% is one quarter. One quarter of 80 is 80 divided by 4.",
+        art: { kind: "pie", pct: 25, label: "25% off" },
+        choices: ["$20", "$25", "$55"], answer: 0,
+        aha: "$20! 25% means a quarter, and a quarter of $80 is $20 — so you would pay $60." }
+    ]
+  },
+  {
+    id: "ratios", title: "Ratio Rangers", icon: "ratio", color: "#a3e635", badge: "Ratio Ranger",
+    steps: [
+      { say: "A ratio compares two amounts — like 2 cups of flour for every 3 cups of milk. Keep the pattern, and you can scale any recipe, map, or mixture up or down.",
+        art: { kind: "formula", lines: ["flour : milk", "2 : 3"] }, btn: "Let's scale!" },
+      { q: "Lemonade uses lemons and water in the ratio 2:5. You use 6 lemons. How much water do you need?",
+        say: "The lemons went from 2 to 6 — that is times 3. Do the same to the water: 5 times 3.",
+        art: { kind: "formula", lines: ["lemons : water", "2 : 5", "6 : ?"] },
+        choices: ["15", "10", "7"], answer: 0,
+        aha: "15! Whatever you do to one side of a ratio, do to the other. 2:5 scaled by 3 is 6:15." },
+      { q: "A class has 12 girls and 8 boys. What is the ratio of girls to boys in simplest form?",
+        say: "Both numbers divide by 4: 12 divided by 4 is 3, and 8 divided by 4 is 2.",
+        art: { kind: "formula", lines: ["12 : 8", "÷4   ÷4", "? : ?"] },
+        choices: ["3:2", "12:8", "2:3"], answer: 0,
+        aha: "3:2! Divide both sides by their biggest common factor, 4, and the ratio is in simplest form." },
+      { q: "A map scale is 1 cm = 10 km. Two towns are 4.5 cm apart on the map. How far apart are they really?",
+        say: "A scale is a ratio. Multiply the map distance by 10: 4.5 times 10.",
+        art: { kind: "formula", lines: ["1 cm = 10 km", "4.5 cm = ? km"] },
+        choices: ["45 km", "14 km", "40 km"], answer: 0,
+        aha: "45 km! Every centimeter on the map stands for 10 real kilometers." },
+      { q: "A car travels 150 miles in 3 hours. What is its unit rate?",
+        say: "A unit rate is per ONE hour. Divide 150 by 3.",
+        art: { kind: "formula", lines: ["150 miles ÷ 3 hours", "= ? per hour"] },
+        choices: ["50 miles per hour", "45 miles per hour", "153 miles per hour"], answer: 0,
+        aha: "50 miles per hour! Unit rates divide the first amount by the second." }
+    ]
+  },
+  {
+    id: "neg", title: "Negative Numbers", icon: "neg", color: "#818cf8", badge: "Below-Zero Hero",
+    steps: [
+      { say: "Numbers do not stop at zero! Negative numbers live to the left of zero — think frosty temperatures, or owing a friend money. The further left, the smaller the number.",
+        art: { kind: "numline", min: -10, max: 6, marks: [{ v: -7, t: "−7" }, { v: 0, t: "0" }, { v: 4, t: "4" }] }, btn: "Below zero we go!" },
+      { q: "Which temperature is coldest: −3°, −12°, or 2°?",
+        say: "On the number line, the coldest temperature sits furthest left — the most below zero.",
+        art: { kind: "numline", min: -14, max: 4, marks: [{ v: -12, t: "−12°" }, { v: -3, t: "−3°" }, { v: 2, t: "2°" }] },
+        choices: ["−12°", "−3°", "2°"], answer: 0,
+        aha: "−12°! Negative numbers run backwards: the bigger the digits, the smaller — and colder — the number." },
+      { q: "What is −4 + 9?",
+        say: "Start at −4 on the line and hop 9 steps to the right, toward the positives.",
+        art: { kind: "numline", min: -6, max: 8, marks: [{ v: -4, t: "start −4" }, { v: 5, t: "?" }] },
+        choices: ["5", "−13", "13"], answer: 0,
+        aha: "5! Adding a positive moves you right, straight past zero." },
+      { q: "What is 3 − 8?",
+        say: "Start at 3 and hop 8 steps to the left. You will pass zero and keep going.",
+        art: { kind: "numline", min: -7, max: 5, marks: [{ v: 3, t: "start 3" }, { v: -5, t: "?" }] },
+        choices: ["−5", "5", "−11"], answer: 0,
+        aha: "−5! Subtracting can take you below zero: 3 minus 8 lands at negative 5." },
+      { q: "What is −6 − 2?",
+        say: "Start at −6. Subtracting 2 more moves you further left, deeper into the negatives.",
+        art: { kind: "numline", min: -10, max: 2, marks: [{ v: -6, t: "start −6" }, { v: -8, t: "?" }] },
+        choices: ["−8", "−4", "8"], answer: 0,
+        aha: "−8! Losing 2 more when you are already at −6 puts you at −8." }
+    ]
+  },
+  {
+    id: "oop", title: "Order of Operations", icon: "oop", color: "#f43f5e", badge: "Order Expert",
+    steps: [
+      { say: "Math has traffic rules! Parentheses first, then exponents, then multiply and divide, then add and subtract — left to right inside each level. Skip the order and the answer changes.",
+        art: { kind: "formula", lines: ["( )  →  x²  →  × ÷  →  + −"] }, btn: "Rules learned!" },
+      { q: "What is 3 + 4 × 2?",
+        say: "Multiplication goes before addition: 4 times 2 is 8, then add the 3.",
+        art: { kind: "formula", lines: ["3 + 4 × 2 = ?"] },
+        choices: ["11", "14", "24"], answer: 0,
+        aha: "11! Multiply first: 3 + 8 = 11. Adding first would wrongly give 14." },
+      { q: "What is (3 + 4) × 2?",
+        say: "Parentheses shout 'me first!' Add inside them before you multiply.",
+        art: { kind: "formula", lines: ["(3 + 4) × 2 = ?"] },
+        choices: ["14", "11", "24"], answer: 0,
+        aha: "14! The parentheses changed everything: 7 times 2 is 14." },
+      { q: "What is 10 − 2²?",
+        say: "Exponents come before subtraction: 2 squared means 2 times 2.",
+        art: { kind: "formula", lines: ["10 − 2² = ?"] },
+        choices: ["6", "64", "8"], answer: 0,
+        aha: "6! 2 squared is 4, and 10 − 4 = 6." },
+      { q: "What is 18 ÷ 3 + 5 × 2?",
+        say: "Multiply and divide first: 18 divided by 3 is 6, and 5 times 2 is 10. Then add.",
+        art: { kind: "formula", lines: ["18 ÷ 3 + 5 × 2 = ?"] },
+        choices: ["16", "28", "22"], answer: 0,
+        aha: "16! 6 + 10 = 16 — every operation in its proper turn." }
+    ]
+  },
+  {
+    id: "eq", title: "First Equations", icon: "eq", color: "#22d3ee", badge: "Equation Solver",
+    steps: [
+      { say: "An equation is a balance scale: both sides must weigh exactly the same. Whatever you do to one side, do to the other — and you can uncover the mystery number, x.",
+        art: { kind: "scale", left: "x + 7", right: "15" }, btn: "Let's solve!" },
+      { q: "Solve for x:  x + 7 = 15",
+        say: "Undo the plus 7 by subtracting 7 from both sides. Then x stands alone.",
+        art: { kind: "scale", left: "x + 7", right: "15" },
+        choices: ["x = 8", "x = 22", "x = 7"], answer: 0,
+        aha: "x = 8! 15 − 7 = 8, and the check works: 8 + 7 = 15." },
+      { q: "Solve for x:  3x = 21",
+        say: "3x means 3 times x. Undo it by dividing both sides by 3.",
+        art: { kind: "scale", left: "3x", right: "21" },
+        choices: ["x = 7", "x = 18", "x = 63"], answer: 0,
+        aha: "x = 7! 21 divided by 3 is 7. Check: 3 times 7 is 21." },
+      { q: "Solve for x:  x − 5 = 12",
+        say: "Undo the minus 5 by adding 5 to both sides.",
+        art: { kind: "scale", left: "x − 5", right: "12" },
+        choices: ["x = 17", "x = 7", "x = 60"], answer: 0,
+        aha: "x = 17! 12 + 5 = 17. Check: 17 − 5 = 12." },
+      { q: "Solve for x:  2x + 4 = 14",
+        say: "Two moves: subtract 4 from both sides first, giving 2x = 10. Then divide both sides by 2.",
+        art: { kind: "scale", left: "2x + 4", right: "14" },
+        choices: ["x = 5", "x = 9", "x = 7"], answer: 0,
+        aha: "x = 5! Undo the addition before the multiplication — the order of operations in reverse." }
+    ]
+  }
+],
+w3: [
+  {
+    id: "algx", title: "Algebra Expressions", icon: "algx", color: "#a78bfa", badge: "Algebra Ace",
+    steps: [
+      { say: "In high school, letters stand in for numbers that can change — variables. An expression like 3x + 5 is a recipe: multiply x by 3, then add 5.",
+        art: { kind: "formula", lines: ["3x + 5"] }, btn: "Let's cook!" },
+      { q: "If x = 4, what is 3x + 5?",
+        say: "Swap x for 4: 3 times 4 is 12, then add 5.",
+        art: { kind: "formula", lines: ["3x + 5,  x = 4"] },
+        choices: ["17", "32", "45"], answer: 0,
+        aha: "17! Substituting means replacing the letter with its number, then following the order of operations." },
+      { q: "Simplify:  5x + 3 − 2x + 7",
+        say: "Combine like terms: 5x minus 2x, and separately 3 plus 7.",
+        art: { kind: "formula", lines: ["5x + 3 − 2x + 7"] },
+        choices: ["3x + 10", "7x + 10", "3x + 4"], answer: 0,
+        aha: "3x + 10! Only like terms combine — x's with x's, plain numbers with plain numbers." },
+      { q: "Expand:  2(x + 6)",
+        say: "The 2 multiplies everything inside the parentheses — both the x and the 6.",
+        art: { kind: "formula", lines: ["2(x + 6)"] },
+        choices: ["2x + 12", "2x + 6", "x + 12"], answer: 0,
+        aha: "2x + 12! That is the distributive property — every term inside gets multiplied." },
+      { q: "Which expression means '5 less than twice a number n'?",
+        say: "'Twice a number' is 2n. '5 less than' that means start from 2n and subtract 5.",
+        art: { kind: "formula", lines: ["'5 less than twice n'"] },
+        choices: ["2n − 5", "5 − 2n", "2(n − 5)"], answer: 0,
+        aha: "2n − 5! Careful — 'less than' flips the subtraction around." }
+    ]
+  },
+  {
+    id: "lin", title: "Lines & Slope", icon: "lin", color: "#2dd4bf", badge: "Slope Star",
+    steps: [
+      { say: "A linear equation draws a straight line. In y = mx + b, m is the slope — how steeply the line climbs — and b is where it crosses the y-axis.",
+        art: { kind: "grid", xMax: 5, yMax: 10, line: [0, 2, 4, 8], dots: [[0, 2, "(0, 2)"]] }, btn: "Let's draw lines!" },
+      { q: "What is the slope of y = 3x + 2?",
+        say: "The slope is the number multiplied by x — the m in y = mx + b.",
+        art: { kind: "formula", lines: ["y = 3x + 2"] },
+        choices: ["3", "2", "5"], answer: 0,
+        aha: "3! For every 1 step right, this line climbs 3." },
+      { q: "A line rises 6 units while running 2 units to the right. What is its slope?",
+        say: "Slope is rise over run: 6 divided by 2.",
+        art: { kind: "grid", xMax: 5, yMax: 10, line: [0, 1, 2, 7], dots: [[2, 7, "rise 6, run 2"]] },
+        choices: ["3", "12", "1/3"], answer: 0,
+        aha: "3! Slope equals rise divided by run. Steep lines have big slopes." },
+      { q: "What is the y-intercept of y = −2x + 5?",
+        say: "The y-intercept is b — the value of y when x is 0, where the line crosses the y-axis.",
+        art: { kind: "grid", xMax: 5, yMax: 8, line: [0, 5, 2.5, 0], dots: [[0, 5, "(0, 5)"]] },
+        choices: ["5", "−2", "0"], answer: 0,
+        aha: "5! The line crosses the y-axis at the point (0, 5)." },
+      { q: "If y = 4x − 1, what is y when x = 3?",
+        say: "Substitute x = 3: 4 times 3 is 12, minus 1.",
+        art: { kind: "formula", lines: ["y = 4x − 1,  x = 3"] },
+        choices: ["11", "7", "12"], answer: 0,
+        aha: "11! Every point on the line is an x, y pair that makes the equation true." }
+    ]
+  },
+  {
+    id: "quad", title: "Quadratics Intro", icon: "quad", color: "#fb7185", badge: "Parabola Pro",
+    steps: [
+      { say: "Square the variable and the straight line bends into a U-shape called a parabola. Quadratics model everything from thrown balls to satellite dishes.",
+        art: { kind: "curve", type: "parabola" }, btn: "Let's bend it!" },
+      { q: "What is the value of x² when x = −5?",
+        say: "Square means multiply the number by itself: negative 5 times negative 5. Two negatives make a positive.",
+        art: { kind: "formula", lines: ["(−5)² = ?"] },
+        choices: ["25", "−25", "−10"], answer: 0,
+        aha: "25! Squaring any number — positive or negative — gives a positive result, or zero." },
+      { q: "Expand:  (x + 3)(x + 2)",
+        say: "Multiply every pair: x times x, x times 2, 3 times x, 3 times 2 — then combine the middle terms.",
+        art: { kind: "formula", lines: ["(x + 3)(x + 2)"] },
+        choices: ["x² + 5x + 6", "x² + 6x + 5", "x² + x + 6"], answer: 0,
+        aha: "x² + 5x + 6! The middle terms 2x and 3x combine into 5x." },
+      { q: "Factor:  x² + 7x + 12",
+        say: "Find two numbers that multiply to 12 and add to 7. Think: 3 and 4.",
+        art: { kind: "formula", lines: ["x² + 7x + 12", "= (x + ?)(x + ?)"] },
+        choices: ["(x + 3)(x + 4)", "(x + 2)(x + 6)", "(x + 1)(x + 12)"], answer: 0,
+        aha: "(x + 3)(x + 4)! Factoring runs expansion backwards — hunt for the pair that multiplies and adds just right." },
+      { q: "Solve:  x² = 49",
+        say: "Undo the square with a square root. And remember — both 7 and negative 7 square to 49.",
+        art: { kind: "formula", lines: ["x² = 49"] },
+        choices: ["x = 7 or x = −7", "x = 7 only", "x = 24.5"], answer: 0,
+        aha: "x = 7 or x = −7! Quadratics often have two solutions — never lose the negative one." }
+    ]
+  },
+  {
+    id: "expo", title: "Exponents & Roots", icon: "expo", color: "#fbbf24", badge: "Power Player",
+    steps: [
+      { say: "Exponents are repeated multiplication in shorthand: 2 to the 5th means 2 multiplied by itself 5 times. Roots run the film backwards.",
+        art: { kind: "formula", lines: ["2⁵ = 2×2×2×2×2"] }, btn: "Power up!" },
+      { q: "What is 2⁴?",
+        say: "Multiply it out: 2 times 2 is 4, times 2 is 8, times 2 is 16.",
+        art: { kind: "formula", lines: ["2⁴ = ?"] },
+        choices: ["16", "8", "6"], answer: 0,
+        aha: "16! Four 2's multiplied together: 2 × 2 × 2 × 2 = 16." },
+      { q: "Simplify:  x³ · x²",
+        say: "When multiplying powers with the same base, add the exponents: 3 plus 2.",
+        art: { kind: "formula", lines: ["x³ · x² = ?"] },
+        choices: ["x⁵", "x⁶", "x¹"], answer: 0,
+        aha: "x⁵! Same base — add the exponents. x⁶ would be x³ times x³." },
+      { q: "What is √144?",
+        say: "Ask yourself: what number times itself makes 144? Try 12: 12 times 12.",
+        art: { kind: "formula", lines: ["√144 = ?"] },
+        choices: ["12", "14", "72"], answer: 0,
+        aha: "12! The square root undoes the square: 12 squared is 144." },
+      { q: "What is 5⁰?",
+        say: "Follow the pattern down: 5 cubed is 125, 5 squared is 25, 5 to the 1st is 5 — each step divides by 5. One more step gives...",
+        art: { kind: "formula", lines: ["5³=125, 5²=25, 5¹=5, 5⁰=?"] },
+        choices: ["1", "0", "5"], answer: 0,
+        aha: "1! Any nonzero number to the zero power is 1 — the pattern divides all the way down to it." }
+    ]
+  },
+  {
+    id: "geo2", title: "Angles & Pythagoras", icon: "geo", color: "#84cc16", badge: "Geometry Genius",
+    steps: [
+      { say: "Two geometry greatest hits: the angles of every triangle sum to 180 degrees, and Pythagoras unlocks right triangles — a squared plus b squared equals c squared.",
+        art: { kind: "angle", a: "65°", b: "55°", c: "60°" }, btn: "Let's measure!" },
+      { q: "Two angles of a triangle are 65° and 55°. What is the third angle?",
+        say: "All three angles sum to 180. 65 plus 55 is 120 — subtract that from 180.",
+        art: { kind: "angle", a: "65°", b: "55°", c: "?" },
+        choices: ["60°", "70°", "50°"], answer: 0,
+        aha: "60°! 180 minus 120 is 60. Every triangle, every time: 180 degrees in total." },
+      { q: "A right triangle has legs 3 and 4. What is the hypotenuse?",
+        say: "Square the legs: 9 and 16. Add them: 25. Now take the square root of 25.",
+        art: { kind: "tri", bottom: "4", left: "3", hyp: "?" },
+        choices: ["5", "7", "25"], answer: 0,
+        aha: "5! The 3-4-5 triangle is the most famous right triangle of all — Pythagoras guarantees it." },
+      { q: "The legs of a right triangle are 6 and 8. What is the hypotenuse?",
+        say: "6 squared is 36, 8 squared is 64. Add them, then find the square root of the sum.",
+        art: { kind: "tri", bottom: "8", left: "6", hyp: "?" },
+        choices: ["10", "14", "100"], answer: 0,
+        aha: "10! 36 + 64 = 100, and the square root of 100 is 10. It is the 3-4-5 triangle, doubled." },
+      { q: "A right angle is split into two angles. One is 35°. What is the other?",
+        say: "Angles that add to 90 degrees fill a right angle exactly. 90 minus 35 is...",
+        art: { kind: "formula", lines: ["35° + ? = 90°"] },
+        choices: ["55°", "45°", "145°"], answer: 0,
+        aha: "55°! Angles summing to 90 degrees are called complementary: 90 − 35 = 55." }
+    ]
+  },
+  {
+    id: "prob", title: "Probability", icon: "prob", color: "#c084fc", badge: "Chance Champion",
+    steps: [
+      { say: "Probability measures chance as a fraction: favorable outcomes over total outcomes. Zero means impossible, 1 means certain — everything real lives in between.",
+        art: { kind: "formula", lines: ["P = favorable ÷ total"] }, btn: "Let's take a chance!" },
+      { q: "You roll a fair die. What is the probability of rolling a 4?",
+        say: "One favorable face — the 4 — out of six faces in total.",
+        art: { kind: "dice", n: 4 },
+        choices: ["1/6", "1/4", "4/6"], answer: 0,
+        aha: "1/6! One winning face out of six equally likely faces." },
+      { q: "A bag holds 3 red and 2 blue marbles. You grab one without looking. What is P(red)?",
+        say: "Count them: 3 red marbles out of 5 marbles in total.",
+        art: { kind: "marbles", colors: ["#ef4444", "#ef4444", "#ef4444", "#3b82f6", "#3b82f6"] },
+        choices: ["3/5", "2/5", "3/2"], answer: 0,
+        aha: "3/5! Favorable over total: 3 red out of 5 marbles." },
+      { q: "You flip a coin twice. What is the probability of heads both times?",
+        say: "Each flip is independent — it cannot affect the other. Multiply one half by one half.",
+        art: { kind: "formula", lines: ["1/2 × 1/2 = ?"] },
+        choices: ["1/4", "1/2", "1"], answer: 0,
+        aha: "1/4! Independent events multiply — the coin has no memory of the first flip." },
+      { q: "A spinner has 8 equal sections and 3 are green. What is P(green)?",
+        say: "3 favorable sections out of 8 equal sections.",
+        art: { kind: "spinner", total: 8, colored: 3 },
+        choices: ["3/8", "3/5", "8/3"], answer: 0,
+        aha: "3/8! Same recipe every time: favorable over total, when all outcomes are equally likely." }
+    ]
+  }
+],
+w4: [
+  {
+    id: "func", title: "Functions", icon: "func", color: "#818cf8", badge: "Function Fan",
+    steps: [
+      { say: "College math runs on functions: machines that take an input x and return exactly one output, written f of x. Plug in, compute, out comes the answer.",
+        art: { kind: "formula", lines: ["x  →  f(x)  →  output"] }, btn: "Start the machine!" },
+      { q: "If f(x) = 2x + 3, what is f(4)?",
+        say: "Replace every x with 4: 2 times 4 is 8, plus 3.",
+        art: { kind: "formula", lines: ["f(4) = 2(4) + 3"] },
+        choices: ["11", "14", "27"], answer: 0,
+        aha: "11! Function notation just means 'evaluate here': f(4) = 2 times 4, plus 3." },
+      { q: "If f(x) = x² − 1, what is f(5)?",
+        say: "5 squared is 25, minus 1. Square first, then subtract.",
+        art: { kind: "formula", lines: ["f(5) = 5² − 1"] },
+        choices: ["24", "9", "26"], answer: 0,
+        aha: "24! Mind the order of operations inside the function." },
+      { q: "Which x-value is NOT allowed for f(x) = 10/x?",
+        say: "Division has one forbidden input. Which value makes the denominator zero?",
+        art: { kind: "formula", lines: ["f(x) = 10 / x"] },
+        choices: ["0", "1", "10"], answer: 0,
+        aha: "0! Dividing by zero is undefined — so 0 is excluded from the domain of the function." },
+      { q: "If f(x) = 3x, what input gives an output of 30?",
+        say: "Set 3x equal to 30 and solve, just like your very first equations.",
+        art: { kind: "formula", lines: ["3x = 30"] },
+        choices: ["10", "90", "27"], answer: 0,
+        aha: "10! Working backwards from output to input is called finding an inverse — a big college theme." }
+    ]
+  },
+  {
+    id: "trig", title: "Trigonometry Basics", icon: "trig", color: "#f472b6", badge: "Trig Star",
+    steps: [
+      { say: "Trigonometry studies right triangles. Sine, cosine, and tangent are ratios of sides — and SOHCAHTOA helps you remember which is which.",
+        art: { kind: "tri", bottom: "adjacent", left: "opposite", hyp: "hypotenuse", angle: true }, btn: "Meet the ratios!" },
+      { q: "In a right triangle, what is sin(θ)?",
+        say: "SOH: Sine equals Opposite over Hypotenuse. That is the S-O-H in SOHCAHTOA.",
+        art: { kind: "tri", bottom: "adjacent", left: "opposite", hyp: "hypotenuse", angle: true },
+        choices: ["Opposite ÷ hypotenuse", "Adjacent ÷ hypotenuse", "Opposite ÷ adjacent"], answer: 0,
+        aha: "Opposite over hypotenuse! SOHCAHTOA: Sine-Opposite-Hypotenuse, Cosine-Adjacent-Hypotenuse, Tangent-Opposite-Adjacent." },
+      { q: "A right triangle has opposite side 3 and hypotenuse 5. What is sin(θ)?",
+        say: "Opposite over hypotenuse: 3 over 5.",
+        art: { kind: "tri", bottom: "4", left: "3", hyp: "5", angle: true },
+        choices: ["3/5", "3/4", "5/3"], answer: 0,
+        aha: "3/5! The sine depends only on the ratio of the sides, not on the triangle's size." },
+      { q: "What is cos(0°)?",
+        say: "At zero degrees, the adjacent side stretches the full length of the hypotenuse — so the ratio of adjacent to hypotenuse is...",
+        art: { kind: "formula", lines: ["cos(0°) = ?"] },
+        choices: ["1", "0", "0.5"], answer: 0,
+        aha: "1! And sin(0°) is 0. Those two facts are where the unit circle begins." },
+      { q: "What is tan(45°)?",
+        say: "At 45 degrees, the opposite and adjacent sides are exactly equal in length. So their ratio is...",
+        art: { kind: "tri", bottom: "1", left: "1", hyp: "√2", angle: true },
+        choices: ["1", "0", "2"], answer: 0,
+        aha: "1! Equal sides make an equal ratio — tan of 45 degrees is exactly 1." }
+    ]
+  },
+  {
+    id: "logs", title: "Logarithms", icon: "logs", color: "#2dd4bf", badge: "Log Hunter",
+    steps: [
+      { say: "A logarithm asks a question: 'what exponent do I need?' Log base 2 of 8 asks: 2 to what power makes 8? Logs unravel exponents — they are the inverse operation.",
+        art: { kind: "formula", lines: ["log₂(8) = ?", "because 2³ = 8"] }, btn: "Ask the question!" },
+      { q: "What is log₂(8)?",
+        say: "2 to what power gives 8? Count the multiplications: 2, 4, 8 — that is three.",
+        art: { kind: "formula", lines: ["log₂(8) = ?"] },
+        choices: ["3", "4", "16"], answer: 0,
+        aha: "3! 2 cubed is 8, so log base 2 of 8 is 3. The logarithm IS the exponent." },
+      { q: "What is log₁₀(1000)?",
+        say: "10 to what power makes 1000? Count the zeros: 10, 100, 1000.",
+        art: { kind: "formula", lines: ["log₁₀(1000) = ?"] },
+        choices: ["3", "10", "100"], answer: 0,
+        aha: "3! 10 cubed is 1000. For exact powers of ten, the log just counts the zeros." },
+      { q: "What is log₅(25)?",
+        say: "5 times 5 is 25 — so 5 to what power gives 25?",
+        art: { kind: "formula", lines: ["log₅(25) = ?"] },
+        choices: ["2", "5", "20"], answer: 0,
+        aha: "2! 5 squared is 25, so log base 5 of 25 is 2." },
+      { q: "What is log₃(1)?",
+        say: "Any base raised to the zero power equals 1. So what exponent produces 1?",
+        art: { kind: "formula", lines: ["log₃(1) = ?"] },
+        choices: ["0", "1", "3"], answer: 0,
+        aha: "0! The logarithm of 1 is always 0, whatever the base, because any base to the power 0 makes 1." }
+    ]
+  },
+  {
+    id: "limits", title: "Limits", icon: "limits", color: "#60a5fa", badge: "Limit Leader",
+    steps: [
+      { say: "A limit asks what value a function approaches as x creeps toward a target — even if the function never quite arrives there. Limits are the foundation all of calculus stands on.",
+        art: { kind: "curve", type: "approach" }, btn: "Creep closer!" },
+      { q: "As x gets closer and closer to 2, what value does 3x approach?",
+        say: "3x gets closer and closer to 3 times 2.",
+        art: { kind: "formula", lines: ["x → 2,   3x → ?"] },
+        choices: ["6", "5", "It never arrives"], answer: 0,
+        aha: "6! Limits describe the destination — and here, substituting gives it directly: 3 times 2 is 6." },
+      { q: "What is the limit of 1/x as x grows without bound?",
+        say: "Divide 1 by bigger and bigger numbers: 1/10, 1/100, 1/1000. The results shrink toward...",
+        art: { kind: "curve", type: "approach" },
+        choices: ["0", "1", "Infinity"], answer: 0,
+        aha: "0! The values never quite touch zero, but they approach it — and approaching is exactly what a limit means." },
+      { q: "What is the limit of (x² − 4)/(x − 2) as x → 2?",
+        say: "Plugging in 2 gives 0 over 0 — undefined! But factor the top: (x − 2)(x + 2). The (x − 2) factors cancel, leaving x + 2.",
+        art: { kind: "formula", lines: ["(x² − 4)/(x − 2)", "= x + 2  (x ≠ 2)"] },
+        choices: ["4", "0", "Undefined forever"], answer: 0,
+        aha: "4! After canceling, substitute: 2 + 2 = 4. The function has a hole at x = 2, but the limit exists." },
+      { q: "As x approaches a target, a function outputs 1.9, 1.99, 1.999. What is the limit?",
+        say: "Watch where the outputs are heading — not where they happen to stop.",
+        art: { kind: "formula", lines: ["1.9, 1.99, 1.999, …"] },
+        choices: ["2", "1.999", "Infinity"], answer: 0,
+        aha: "2! The outputs home in on 2. The limit is the value approached." }
+    ]
+  },
+  {
+    id: "deriv", title: "Derivatives: Power Rule", icon: "deriv", color: "#fb923c", badge: "Derivative Dynamo",
+    steps: [
+      { say: "A derivative measures how fast something is changing — the slope of a curve at a single point. Your first tool is the power rule: bring the exponent down in front, then subtract 1 from it.",
+        art: { kind: "curve", type: "tangent" }, btn: "Find the slope!" },
+      { q: "What is the derivative of x³?",
+        say: "Power rule: bring the 3 down in front, then the exponent drops to 2.",
+        art: { kind: "formula", lines: ["d/dx  x³ = ?"] },
+        choices: ["3x²", "x²", "3x"], answer: 0,
+        aha: "3x²! Multiply by the old exponent, then subtract 1 from it. That is the power rule." },
+      { q: "What is the derivative of 5x?",
+        say: "5x is a straight line with slope 5 — and a line's derivative is its slope, the same everywhere.",
+        art: { kind: "formula", lines: ["d/dx  5x = ?"] },
+        choices: ["5", "5x", "0"], answer: 0,
+        aha: "5! The derivative of a straight line is just its slope — 5 at every point." },
+      { q: "What is the derivative of x² + 4x?",
+        say: "Take it term by term: x squared becomes 2x, and 4x becomes 4.",
+        art: { kind: "formula", lines: ["d/dx  (x² + 4x) = ?"] },
+        choices: ["2x + 4", "2x", "x + 4"], answer: 0,
+        aha: "2x + 4! Derivatives distribute over addition — differentiate each term on its own." },
+      { q: "A ball's position is s(t) = t². What is its velocity at t = 3?",
+        say: "Velocity is the derivative of position: the derivative of t squared is 2t. Now plug in t = 3.",
+        art: { kind: "formula", lines: ["s(t) = t²", "s′(t) = 2t,  t = 3"] },
+        choices: ["6", "9", "3"], answer: 0,
+        aha: "6! At t = 3 the ball moves at 6 units per second. That is why derivatives matter." }
+    ]
+  },
+  {
+    id: "integ", title: "Integrals Intro", icon: "integ", color: "#4ade80", badge: "Integral Explorer",
+    steps: [
+      { say: "Integration is accumulation — adding up infinitely many tiny pieces to find an area or a total. It is also the derivative's mirror image: antiderivatives run the power rule backwards.",
+        art: { kind: "curve", type: "area" }, btn: "Add it all up!" },
+      { q: "What is ∫ 2x dx?",
+        say: "Run the power rule backwards: what function has derivative 2x? Raise the exponent by one and divide by the new exponent.",
+        art: { kind: "formula", lines: ["∫ 2x dx = ?"] },
+        choices: ["x² + C", "2", "x + C"], answer: 0,
+        aha: "x² + C! The derivative of x squared is 2x. And never forget +C — a constant's derivative is zero, so one could always be hiding there." },
+      { q: "What is ∫ x³ dx?",
+        say: "Exponent up one: x to the fourth. Then divide by the new exponent, 4.",
+        art: { kind: "formula", lines: ["∫ x³ dx = ?"] },
+        choices: ["x⁴/4 + C", "3x²", "x⁴ + C"], answer: 0,
+        aha: "x⁴/4 + C! Check it: differentiating x⁴/4 gives back exactly x³." },
+      { q: "What is the area under the line y = 2, from x = 0 to x = 5?",
+        say: "The region is a plain rectangle: height 2, width 5.",
+        art: { kind: "formula", lines: ["height 2 × width 5"] },
+        choices: ["10", "7", "25"], answer: 0,
+        aha: "10! Definite integrals measure area — and this one is a simple 2 by 5 rectangle." },
+      { q: "Which pair of operations undo each other?",
+        say: "Calculus has a famous theorem linking its two big ideas...",
+        art: { kind: "formula", lines: ["d/dx   ⇄   ∫ dx"] },
+        choices: ["Derivatives and integrals", "Derivatives and addition", "Integrals and division"], answer: 0,
+        aha: "Derivatives and integrals! The Fundamental Theorem of Calculus: integration undoes differentiation, and differentiation undoes integration." }
+    ]
+  },
+  {
+    id: "stats", title: "Statistics", icon: "stats", color: "#facc15", badge: "Data Detective",
+    steps: [
+      { say: "Statistics summarizes data with a few powerful numbers. Three centers compete: the mean — the fair-share average; the median — the middle value; and the mode — the most frequent.",
+        art: { kind: "bars", data: [4, 8, 6, 10, 2] }, btn: "Crunch the data!" },
+      { q: "What is the mean of 4, 8, 6, 10, 2?",
+        say: "Add them all: 4 + 8 + 6 + 10 + 2 = 30. Then divide by how many values there are: 5.",
+        art: { kind: "bars", data: [4, 8, 6, 10, 2] },
+        choices: ["6", "8", "30"], answer: 0,
+        aha: "6! Mean equals total divided by count: 30 divided by 5 is 6." },
+      { q: "Data: 3, 7, 9, 12, 15. What is the median?",
+        say: "The values are already in order — the median is simply the one in the middle.",
+        art: { kind: "bars", data: [3, 7, 9, 12, 15] },
+        choices: ["9", "7", "12"], answer: 0,
+        aha: "9! With five values, the third one sits in the middle." },
+      { q: "Data: 5, 2, 8, 2, 9, 2. What is the mode?",
+        say: "Count the repeats — which value shows up most often?",
+        art: { kind: "bars", data: [5, 2, 8, 2, 9, 2] },
+        choices: ["2", "5", "8"], answer: 0,
+        aha: "2! It appears three times. The mode is the crowd favorite." },
+      { q: "What is the range of 14, 3, 22, 9?",
+        say: "The range measures spread: the biggest value minus the smallest.",
+        art: { kind: "bars", data: [14, 3, 22, 9] },
+        choices: ["19", "25", "13"], answer: 0,
+        aha: "19! 22 minus 3 is 19. The range tells you how spread out the data is." }
+    ]
+  },
+  {
+    id: "matrix", title: "Matrices Intro", icon: "matrix", color: "#38bdf8", badge: "Matrix Master",
+    steps: [
+      { say: "A matrix is a grid of numbers inside brackets — the workhorse of college math, computer graphics, and AI. You add matrices entry by entry, matching positions.",
+        art: { kind: "matrix", a: [[1, 2], [3, 4]], b: [[5, 6], [7, 8]], op: "+", highlight: [0, 0] }, btn: "Enter the matrix!" },
+      { q: "Add the matrices. What is the top-left entry of the sum?",
+        say: "Add matching positions: top-left meets top-left — 1 plus 5.",
+        art: { kind: "matrix", a: [[1, 2], [3, 4]], b: [[5, 6], [7, 8]], op: "+", highlight: [0, 0] },
+        choices: ["6", "8", "10"], answer: 0,
+        aha: "6! Matrices add position by position. The full sum is 6, 8 on top and 10, 12 below." },
+      { q: "What is the entry in row 2, column 1 of this matrix?",
+        say: "Row 2 is the bottom row; column 1 is the left column. Find where they cross.",
+        art: { kind: "matrix", a: [[7, 9], [4, 6]], highlight: [1, 0] },
+        choices: ["4", "9", "6"], answer: 0,
+        aha: "4! Rows run horizontally, columns vertically — row 2, column 1 is the bottom-left entry." },
+      { q: "Multiply every entry of this matrix by 3. What is the bottom-right entry now?",
+        say: "The bottom-right entry is 3, and scalar multiplication multiplies every entry by the scalar.",
+        art: { kind: "matrix", a: [[2, -1], [0, 3]], highlight: [1, 1] },
+        choices: ["9", "6", "3"], answer: 0,
+        aha: "9! A scalar multiplies the whole grid — every single entry scales by 3." },
+      { q: "A 2×3 matrix has 2 rows and 3 columns. How many entries does it hold in total?",
+        say: "Multiply the rows by the columns: 2 times 3.",
+        art: { kind: "matrix", a: [[1, 2, 3], [4, 5, 6]] },
+        choices: ["6", "5", "23"], answer: 0,
+        aha: "6! The dimensions 2 by 3 describe the shape — and 6 entries in total." }
+    ]
+  }
+]
+};
+
+      /* ---------- the four worlds on the adventure map ---------- */
+      var WORLDS = [
+        { id: "w1", num: 1, name: "Grade School", lessons: LESSONS },
+        { id: "w2", num: 2, name: "Middle School", lessons: NEW_LESSONS.w2 },
+        { id: "w3", num: 3, name: "High School", lessons: NEW_LESSONS.w3 },
+        { id: "w4", num: 4, name: "College", lessons: NEW_LESSONS.w4 }
+      ];
+      var ALL_LESSONS = [];
+      WORLDS.forEach(function (W) { W.lessons.forEach(function (L) { ALL_LESSONS.push(L); }); });
+      LESSONS = ALL_LESSONS;
+
+      /* ---------- game state (progress saved on this device) ---------- */
+      var state = { stars: {}, badges: [], streak: 0, bestStreak: 0, sound: true, xp: 0, awards: [] };
+      var SAVE_KEY = "gelli-math-progress-v1";
+      function saveProgress() {
+        try {
+          localStorage.setItem(SAVE_KEY, JSON.stringify({
+            stars: state.stars, badges: state.badges, streak: state.streak,
+            bestStreak: state.bestStreak, sound: state.sound, xp: state.xp, awards: state.awards
+          }));
+        } catch (e) { /* storage unavailable — progress lasts for this visit */ }
+      }
+      function loadProgress() {
+        try {
+          var raw = localStorage.getItem(SAVE_KEY);
+          if (!raw) return;
+          var d = JSON.parse(raw);
+          if (d && typeof d === "object") {
+            if (d.stars && typeof d.stars === "object") state.stars = d.stars;
+            if (Array.isArray(d.badges)) state.badges = d.badges;
+            if (typeof d.streak === "number") state.streak = d.streak;
+            if (typeof d.bestStreak === "number") state.bestStreak = d.bestStreak;
+            if (typeof d.sound === "boolean") state.sound = d.sound;
+            if (typeof d.xp === "number") state.xp = d.xp;
+            if (Array.isArray(d.awards)) state.awards = d.awards;
+          }
+        } catch (e) { /* a fresh start is fine */ }
+      }
+      loadProgress();
+      var run = null; // { lesson, step, mistakes, answered, order, newLevel, worldWasComplete }
+
+      /* ---------- player level & XP ---------- */
+      var LEVEL_TITLES = ["Math Starter", "Number Explorer", "Puzzle Solver", "Math Adventurer", "Equation Explorer", "Problem Pro", "Math Master", "Number Wizard", "Math Champion", "Math Legend"];
+      function levelInfo(xp) {
+        var lvl = 1, acc = 0, need = 100;
+        while (xp >= acc + need) { acc += need; lvl++; need += 50; }
+        return { level: lvl, into: xp - acc, span: need, title: LEVEL_TITLES[Math.min(lvl, 10) - 1] };
+      }
+      function addXP(n) {
+        var before = levelInfo(state.xp).level;
+        state.xp += n;
+        var after = levelInfo(state.xp).level;
+        return after > before ? after : 0;
+      }
+
+      /* ---------- achievement awards ---------- */
+      function awardIcon(name) {
+        var p = {
+          star: '<path d="M12 1.8l3.1 6.9 7.5.7-5.6 5 1.6 7.4L12 18l-6.6 3.8L7 14.4 1.4 9.4l7.5-.7z" fill="currentColor"/>',
+          gem: '<path d="M7 3h10l4 6-9 12L3 9z" fill="currentColor"/><path d="M3 9h18M12 21L8.6 9 12 3l3.4 6L12 21" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>',
+          crown: '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-1.6 9.5H4.6z" fill="currentColor"/>',
+          cap: '<path d="M12 4L2 9l10 5 10-5z" fill="currentColor"/><path d="M6 11.6V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.4l-6 3z" fill="currentColor" opacity="0.72"/><path d="M22 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          bolt: '<path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z" fill="currentColor"/>',
+          target: '<circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="12" cy="12" r="4.4" fill="currentColor"/>',
+          trophy: '<path d="M7 3h10v6a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5.2H3.6a3.4 3.4 0 0 0 3.5 4.3M17 5.2h3.4a3.4 3.4 0 0 1-3.5 4.3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 13.6h2V17h-2zM8.2 21l.8-4h6l.8 4z" fill="currentColor"/>'
+        };
+        if (name === "flame") return flameSVG();
+        return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (p[name] || p.star) + '</svg>';
+      }
+      function gameStats() {
+        var done = 0, perfect = 0, worlds = 0;
+        for (var k in state.stars) { if (state.stars[k] > 0) done++; if (state.stars[k] >= 3) perfect++; }
+        WORLDS.forEach(function (W) {
+          if (W.lessons.every(function (L) { return (state.stars[L.id] || 0) > 0; })) worlds++;
+        });
+        return { stars: totalStars(), done: done, perfect: perfect, worlds: worlds, bestStreak: state.bestStreak, level: levelInfo(state.xp).level };
+      }
+      var AWARDS = [
+        { id: "first", name: "First Steps", req: "Finish your first lesson", icon: "star", test: function (S) { return S.done >= 1; } },
+        { id: "stars10", name: "Ten Star Club", req: "Earn 10 stars", icon: "star", test: function (S) { return S.stars >= 10; } },
+        { id: "stars25", name: "Star Collector", req: "Earn 25 stars", icon: "gem", test: function (S) { return S.stars >= 25; } },
+        { id: "stars50", name: "Superstar Fifty", req: "Earn 50 stars", icon: "gem", test: function (S) { return S.stars >= 50; } },
+        { id: "stars75", name: "Galaxy of Stars", req: "Earn 75 stars", icon: "crown", test: function (S) { return S.stars >= 75; } },
+        { id: "perfect1", name: "Perfect Finish", req: "Finish a lesson with no mistakes", icon: "target", test: function (S) { return S.perfect >= 1; } },
+        { id: "perfect5", name: "Flawless Five", req: "Finish 5 lessons with no mistakes", icon: "target", test: function (S) { return S.perfect >= 5; } },
+        { id: "perfect12", name: "Perfectionist", req: "Finish 12 lessons with no mistakes", icon: "trophy", test: function (S) { return S.perfect >= 12; } },
+        { id: "streak10", name: "On Fire", req: "Get a 10-answer streak", icon: "flame", test: function (S) { return S.bestStreak >= 10; } },
+        { id: "streak25", name: "Unstoppable", req: "Get a 25-answer streak", icon: "flame", test: function (S) { return S.bestStreak >= 25; } },
+        { id: "world1", name: "Grade School Graduate", req: "Finish World 1", icon: "cap", test: function (S) { return S.worlds >= 1; } },
+        { id: "world2", name: "Middle School Master", req: "Finish World 2", icon: "cap", test: function (S) { return S.worlds >= 2; } },
+        { id: "world3", name: "High School Hero", req: "Finish World 3", icon: "cap", test: function (S) { return S.worlds >= 3; } },
+        { id: "world4", name: "College Champion", req: "Finish World 4", icon: "trophy", test: function (S) { return S.worlds >= 4; } },
+        { id: "level5", name: "Level 5 Scholar", req: "Reach Level 5", icon: "bolt", test: function (S) { return S.level >= 5; } },
+        { id: "level10", name: "Level 10 Legend", req: "Reach Level 10", icon: "crown", test: function (S) { return S.level >= 10; } }
+      ];
+      function checkAwards() {
+        var S = gameStats(), fresh = [];
+        AWARDS.forEach(function (A) {
+          if (state.awards.indexOf(A.id) < 0 && A.test(S)) { state.awards.push(A.id); fresh.push(A); }
+        });
+        return fresh;
+      }
+      var UNLOCK_TEXT = {
+        2: "World complete! You finished Grade School — and Middle School is now unlocked!",
+        3: "World complete! You finished Middle School — and High School is now unlocked!",
+        4: "World complete! You finished High School — welcome to College Math!",
+        5: "You finished College Math! From second grade all the way to calculus — what a climb. Gelli is so proud of you!"
+      };
+      var LEVELUP_TEXT = "Level up! You reached a brand new level! Keep climbing, math star!";
+
+      var CHEERS = ["Yes! You got it!", "Brilliant work!", "Roar-some! That's right!", "You did it, superstar!", "Exactly right — high paw!"];
+      var OOPS = ["Oops — not quite. Try again, superstar!", "Good try! Look at the picture once more.", "Almost! Gelli believes in you — one more try!"];
+
+      /* ---------- sound: Gelli's recorded voice + little chimes ---------- */
+      function speak(text) { speakSeq([text]); }
+      function speakSeq(texts) {
+        if (!state.sound) return;
+        stopVoice();
+        var keys = [], allFound = texts.length > 0;
+        for (var i = 0; i < texts.length; i++) {
+          var k = AUDIO[texts[i]];
+          if (k) keys.push(k); else allFound = false;
+        }
+        if (allFound) { playQueue = keys; playNextClip(); return; }
+        /* fallback for anything unrecorded: device speech, British voice first */
+        try {
+          var u = new SpeechSynthesisUtterance(texts.join(" "));
+          u.rate = 1.0; u.pitch = 1.05;
+          var vs = window.speechSynthesis.getVoices(), pick = null, j;
+          for (j = 0; j < vs.length; j++) { if (/en[-_]GB/i.test(vs[j].lang) && /google|natural|neural/i.test(vs[j].name)) { pick = vs[j]; break; } }
+          if (!pick) for (j = 0; j < vs.length; j++) { if (/en[-_]GB/i.test(vs[j].lang)) { pick = vs[j]; break; } }
+          if (!pick) for (j = 0; j < vs.length; j++) { if (/^en/i.test(vs[j].lang)) { pick = vs[j]; break; } }
+          if (pick) u.voice = pick;
+          window.speechSynthesis.speak(u);
+        } catch (e) { /* speech is a bonus, never a blocker */ }
+      }
+      /* recorded voice clips: exact spoken line -> assets/audio/<key>.mp3 */
+      var AUDIO = {
+        "Hi! I'm Gelli the cat, and I know a shape trick that will blow your mind. See this triangle? It's hiding a secret!": "s-twin-0",
+        "Every triangle has a twin — an exact copy. If the twin flips over and snuggles in, what shape do they make together?": "s-twin-1",
+        "Two twin triangles fit together perfectly — no gaps, no overlaps — to make one whole square!": "a-twin-1",
+        "Ta-da! Here comes the twin… and look! Together they make ONE whole square. The line down the middle shows the two halves.": "s-twin-2",
+        "Count the triangles inside the square. One… and its twin…": "s-twin-3",
+        "Just 2! Each triangle is one half of the square — ½ + ½ makes a whole.": "a-twin-3",
+        "When a whole is split into 2 equal parts, each part has a special name. What is it?": "s-twin-4",
+        "One half! Two halves that are exactly the same size always make one whole.": "a-twin-4",
+        "The twin trick works on rectangles too. The rectangle is the whole. What part is each triangle?": "s-twin-5",
+        "One half again! Any shape split into 2 equal parts has halves — that's the twin trick!": "a-twin-5",
+        "Time to add! Here's my secret: add the tens first, then the ones. The blocks will help us. Ready, explorer?": "s-add-0",
+        "Tens first: 3 tens + 2 tens = 5 tens. Ones next: 4 + 5 = 9. Now put it together!": "s-add-1",
+        "34 + 25 = 59. Five tens and nine ones — adding tens first makes big numbers easy!": "a-add-1",
+        "Watch the ones: 7 + 8 = 15. That's 1 new ten and 5 ones! So 4 tens become 5 tens, plus 5 ones.": "s-add-2",
+        "47 + 8 = 55. When the ones reach 10 or more, they trade up into a new ten!": "a-add-2",
+        "It's the same adding — 28 + 31. Tens: 2 + 3 = 5 tens. Ones: 8 + 1 = 9 ones.": "s-add-3",
+        "28 + 31 = 59 shells. Word problems are just adding in a costume!": "a-add-3",
+        "Tens: 6 + 2 = 8 tens. Ones: 3 + 7 = 10 ones — uh oh, 10 ones trade into 1 more ten!": "s-add-4",
+        "63 + 27 = 90. Eight tens plus the traded ten makes 9 tens — and zero ones left over!": "a-add-4",
+        "Welcome to the safari! Subtracting means taking away. We'll cross out the blocks we take. Brave explorers, let's go!": "s-sub-0",
+        "Take away 2 tens and 4 ones. Count what's left: 3 tens and 2 ones.": "s-sub-1",
+        "56 − 24 = 32. Take away tens, take away ones, count the rest!": "a-sub-1",
+        "Tricky one! We only have 2 ones but need to take 8. Trade one ten for 10 ones — now we have 12 ones. 12 − 8 = 4, and 3 tens − 1 ten = 2 tens.": "s-sub-2",
+        "42 − 18 = 24. Trading a ten for ones is the safari survival trick!": "a-sub-2",
+        "73 − 45. Trade a ten: 13 − 5 = 8 ones. Then 6 tens − 4 tens = 2 tens.": "s-sub-3",
+        "73 − 45 = 28 birds left in the tree.": "a-sub-3",
+        "Zero ones! Trade a ten first: 10 − 6 = 4 ones. Then 8 tens − 3 tens = 5 tens.": "s-sub-4",
+        "90 − 36 = 54. You handled the zero like a true safari guide!": "a-sub-4",
+        "Numbers wear their value in their place! The digit on the left counts TENS. The digit on the right counts ONES. Watch the chart!": "s-place-0",
+        "Count the tens rods first… 4 tens. Then the ones cubes… 7 ones. What number is 4 tens and 7 ones?": "s-place-1",
+        "47! Four tens make 40, plus 7 ones makes 47.": "a-place-1",
+        "Find the tens place — it's the digit on the left, the first one you read.": "s-place-2",
+        "6 tens! The 6 in 63 is worth 60 — that's the power of place.": "a-place-2",
+        "Tens digit first, ones digit second. Five… then two…": "s-place-3",
+        "52! Tens on the left, ones on the right — every time.": "a-place-3",
+        "The 8 sits in the tens place. So it's not just 8 — it's 8 tens!": "s-place-4",
+        "80! A digit's place tells you its power. The 8 in 84 is worth 80.": "a-place-4",
+        "Welcome to the parade! We don't count every stone — we HOP over them in equal jumps. Counting by 2s sounds like this: 2, 4, 6, 8… feel the rhythm?": "s-skip-0",
+        "Hop one more jump of 2. Six plus 2 is…?": "s-skip-1",
+        "8! Every hop adds 2. 2, 4, 6, 8 — the parade marches on!": "a-skip-1",
+        "Bigger hops now — each jump adds 5. Fifteen plus 5 is…?": "s-skip-2",
+        "20! Counting by 5s is perfect for nickels and fingers — 5, 10, 15, 20!": "a-skip-2",
+        "Tens are the easiest hops of all. Only the tens digit changes!": "s-skip-3",
+        "60! 30, 40, 50, 60 — by 10s, the ones always stay zero.": "a-skip-3",
+        "Keep the rhythm: each stone is 2 more than the one before. Sixteen plus 2!": "s-skip-4",
+        "18! You kept the beat all the way. 12, 14, 16, 18!": "a-skip-4",
+        "Ahoy, treasure hunter! Four coins to know: a penny is 1 cent, a nickel is 5, a dime is 10, and a quarter is 25. Let's hunt!": "s-coins-0",
+        "The dime is the smallest coin, but it's worth more than a nickel! Remember our coin lineup…": "s-coins-1",
+        "10 cents! Small coin, mighty value — a dime is 10¢.": "a-coins-1",
+        "Add them up: the quarter is 25¢, the penny is 1¢. 25 + 1 = ?": "s-coins-2",
+        "26¢! Start with the biggest coin, then count on the little ones.": "a-coins-2",
+        "Start big: dime is 10. Count on by 5s for the nickel: 15. Then the penny: 16!": "s-coins-3",
+        "16¢! Biggest coin first, then count on — that's the treasure hunter's way.": "a-coins-3",
+        "Skip count the dimes by 10s: 10, 20. Now add the nickel's 5…": "s-coins-4",
+        "25¢ — exactly one quarter's worth, made from three coins!": "a-coins-4",
+        "Tick tock! The SHORT hand tells the hour. The LONG hand tells the minutes. When the long hand points straight up at 12, it's exactly o'clock!": "s-time-0",
+        "Short hand first: it points at 3. Long hand points up at 12 — that's o'clock!": "s-time-1",
+        "3 o'clock! Short hand on the 3, long hand on the 12.": "a-time-1",
+        "When the long hand points at 6, 30 minutes have passed — it's half past the hour. The short hand is halfway to 8, so we just passed 7…": "s-time-2",
+        "Half past 7 — also written 7:30. The long hand at 6 means 30 minutes!": "a-time-2",
+        "Short hand is just past 11. Long hand points up… o'clock time!": "s-time-3",
+        "11 o'clock! You read both hands like a clock champion.": "a-time-3",
+        "Long hand on the 6 means half past. Short hand is halfway between 4 and 5, so the hour we passed is 4.": "s-time-4",
+        "Half past 4 — 4:30! Half past means the hour is half done.": "a-time-4",
+        "Welcome to my star garden! Stars planted in neat rows and columns are called an ARRAY. Arrays turn counting into a superpower.": "s-array-0",
+        "Count row by row: there are 3 rows, and each row has 4 stars. 4 + 4 + 4 = ?": "s-array-1",
+        "12 stars! 3 rows of 4. Adding the same number over and over is array magic.": "a-array-1",
+        "Skip count by 5s — one count for each row: 5… 10!": "s-array-2",
+        "10 stars! 2 rows of 5 — and skip counting by 5s counted them in a flash.": "a-array-2",
+        "Count the sides — follow the orange dots around the corners. This shape is a pentagon!": "s-array-3",
+        "5 sides! Penta means five. A stop-sign shape has 8 — that's an octagon!": "a-array-3",
+        "Add the rows: 3 + 3 + 3 + 3. Or skip count by 3s: 3, 6, 9…": "s-array-4",
+        "12 again! 4 rows of 3 and 3 rows of 4 both make 12 — arrays can turn and stay the same!": "a-array-4",
+        "Yes! You got it!": "cheer-0",
+        "Brilliant work!": "cheer-1",
+        "Roar-some! That's right!": "cheer-2",
+        "You did it, superstar!": "cheer-3",
+        "Exactly right — high paw!": "cheer-4",
+        "Oops — not quite. Try again, superstar!": "oops-0",
+        "Good try! Look at the picture once more.": "oops-1",
+        "Almost! Gelli believes in you — one more try!": "oops-2",
+        "Lesson complete! You earned 1 star! Amazing work!": "fin-1",
+        "Lesson complete! You earned 2 stars! Amazing work!": "fin-2",
+        "Lesson complete! You earned 3 stars! Amazing work!": "fin-3",
+        "Sound on! Let's play!": "snd-on"
+};
+      /* recorded lines for Worlds 2-4 and celebrations (same Paloma voice) */
+      var AUDIO_EXTRA = {
+        "Welcome to Middle School! Fractions grow up here. The top number is the numerator, the bottom is the denominator — and equivalent fractions are the same amount wearing different numbers.": "s-frac-0",
+        "Multiply the top and bottom of one half by the same number and the amount stays the same. Which choice did exactly that?": "s-frac-1",
+        "2/4! Doubling the top and bottom keeps the same amount — 2/4 and 1/2 shade exactly the same part of the bar.": "a-frac-1",
+        "Turn 3/4 into eighths: multiply the top and bottom by 2 and it becomes 6/8. Now compare 6/8 with 5/8.": "s-frac-2",
+        "3/4! Written as 6/8 it beats 5/8. Matching denominators make comparing easy.": "a-frac-2",
+        "Make the pieces match first: 1/3 is the same as 2/6. Now add 2/6 + 1/6.": "s-frac-3",
+        "1/2! 2/6 + 1/6 = 3/6, and 3/6 simplifies to 1/2.": "a-frac-3",
+        "Same denominator, so just subtract the tops: 7 minus 3, over 8.": "s-frac-4",
+        "1/2! 7/8 − 3/8 = 4/8, which simplifies to 1/2. The denominator never gets subtracted.": "a-frac-4",
+        "Percents are fractions out of 100, and decimals are their close cousins. 0.5, one half, and 50% are all the same amount in different outfits.": "s-decpct-0",
+        "To turn a decimal into a percent, move the decimal point two places to the right.": "s-decpct-1",
+        "75%! The decimal point hops two places right: 0.75 becomes 75%.": "a-decpct-1",
+        "Start with 10%: 10% of 60 is 6. Now double it to get 20%.": "s-decpct-2",
+        "12! Find 10% first — just divide by 10 — then scale up. 20% of 60 is 12.": "a-decpct-2",
+        "Put them all in the same outfit: 38% is 0.38 as a decimal. Now compare 0.4, 0.35, and 0.38.": "s-decpct-3",
+        "0.4! It is really 0.40, which beats 0.38 and 0.35.": "a-decpct-3",
+        "25% is one quarter. One quarter of 80 is 80 divided by 4.": "s-decpct-4",
+        "$20! 25% means a quarter, and a quarter of $80 is $20 — so you would pay $60.": "a-decpct-4",
+        "A ratio compares two amounts — like 2 cups of flour for every 3 cups of milk. Keep the pattern, and you can scale any recipe, map, or mixture up or down.": "s-ratios-0",
+        "The lemons went from 2 to 6 — that is times 3. Do the same to the water: 5 times 3.": "s-ratios-1",
+        "15! Whatever you do to one side of a ratio, do to the other. 2:5 scaled by 3 is 6:15.": "a-ratios-1",
+        "Both numbers divide by 4: 12 divided by 4 is 3, and 8 divided by 4 is 2.": "s-ratios-2",
+        "3:2! Divide both sides by their biggest common factor, 4, and the ratio is in simplest form.": "a-ratios-2",
+        "A scale is a ratio. Multiply the map distance by 10: 4.5 times 10.": "s-ratios-3",
+        "45 km! Every centimeter on the map stands for 10 real kilometers.": "a-ratios-3",
+        "A unit rate is per ONE hour. Divide 150 by 3.": "s-ratios-4",
+        "50 miles per hour! Unit rates divide the first amount by the second.": "a-ratios-4",
+        "Numbers do not stop at zero! Negative numbers live to the left of zero — think frosty temperatures, or owing a friend money. The further left, the smaller the number.": "s-neg-0",
+        "On the number line, the coldest temperature sits furthest left — the most below zero.": "s-neg-1",
+        "−12°! Negative numbers run backwards: the bigger the digits, the smaller — and colder — the number.": "a-neg-1",
+        "Start at −4 on the line and hop 9 steps to the right, toward the positives.": "s-neg-2",
+        "5! Adding a positive moves you right, straight past zero.": "a-neg-2",
+        "Start at 3 and hop 8 steps to the left. You will pass zero and keep going.": "s-neg-3",
+        "−5! Subtracting can take you below zero: 3 minus 8 lands at negative 5.": "a-neg-3",
+        "Start at −6. Subtracting 2 more moves you further left, deeper into the negatives.": "s-neg-4",
+        "−8! Losing 2 more when you are already at −6 puts you at −8.": "a-neg-4",
+        "Math has traffic rules! Parentheses first, then exponents, then multiply and divide, then add and subtract — left to right inside each level. Skip the order and the answer changes.": "s-oop-0",
+        "Multiplication goes before addition: 4 times 2 is 8, then add the 3.": "s-oop-1",
+        "11! Multiply first: 3 + 8 = 11. Adding first would wrongly give 14.": "a-oop-1",
+        "Parentheses shout 'me first!' Add inside them before you multiply.": "s-oop-2",
+        "14! The parentheses changed everything: 7 times 2 is 14.": "a-oop-2",
+        "Exponents come before subtraction: 2 squared means 2 times 2.": "s-oop-3",
+        "6! 2 squared is 4, and 10 − 4 = 6.": "a-oop-3",
+        "Multiply and divide first: 18 divided by 3 is 6, and 5 times 2 is 10. Then add.": "s-oop-4",
+        "16! 6 + 10 = 16 — every operation in its proper turn.": "a-oop-4",
+        "An equation is a balance scale: both sides must weigh exactly the same. Whatever you do to one side, do to the other — and you can uncover the mystery number, x.": "s-eq-0",
+        "Undo the plus 7 by subtracting 7 from both sides. Then x stands alone.": "s-eq-1",
+        "x = 8! 15 − 7 = 8, and the check works: 8 + 7 = 15.": "a-eq-1",
+        "3x means 3 times x. Undo it by dividing both sides by 3.": "s-eq-2",
+        "x = 7! 21 divided by 3 is 7. Check: 3 times 7 is 21.": "a-eq-2",
+        "Undo the minus 5 by adding 5 to both sides.": "s-eq-3",
+        "x = 17! 12 + 5 = 17. Check: 17 − 5 = 12.": "a-eq-3",
+        "Two moves: subtract 4 from both sides first, giving 2x = 10. Then divide both sides by 2.": "s-eq-4",
+        "x = 5! Undo the addition before the multiplication — the order of operations in reverse.": "a-eq-4",
+        "In high school, letters stand in for numbers that can change — variables. An expression like 3x + 5 is a recipe: multiply x by 3, then add 5.": "s-algx-0",
+        "Swap x for 4: 3 times 4 is 12, then add 5.": "s-algx-1",
+        "17! Substituting means replacing the letter with its number, then following the order of operations.": "a-algx-1",
+        "Combine like terms: 5x minus 2x, and separately 3 plus 7.": "s-algx-2",
+        "3x + 10! Only like terms combine — x's with x's, plain numbers with plain numbers.": "a-algx-2",
+        "The 2 multiplies everything inside the parentheses — both the x and the 6.": "s-algx-3",
+        "2x + 12! That is the distributive property — every term inside gets multiplied.": "a-algx-3",
+        "'Twice a number' is 2n. '5 less than' that means start from 2n and subtract 5.": "s-algx-4",
+        "2n − 5! Careful — 'less than' flips the subtraction around.": "a-algx-4",
+        "A linear equation draws a straight line. In y = mx + b, m is the slope — how steeply the line climbs — and b is where it crosses the y-axis.": "s-lin-0",
+        "The slope is the number multiplied by x — the m in y = mx + b.": "s-lin-1",
+        "3! For every 1 step right, this line climbs 3.": "a-lin-1",
+        "Slope is rise over run: 6 divided by 2.": "s-lin-2",
+        "3! Slope equals rise divided by run. Steep lines have big slopes.": "a-lin-2",
+        "The y-intercept is b — the value of y when x is 0, where the line crosses the y-axis.": "s-lin-3",
+        "5! The line crosses the y-axis at the point (0, 5).": "a-lin-3",
+        "Substitute x = 3: 4 times 3 is 12, minus 1.": "s-lin-4",
+        "11! Every point on the line is an x, y pair that makes the equation true.": "a-lin-4",
+        "Square the variable and the straight line bends into a U-shape called a parabola. Quadratics model everything from thrown balls to satellite dishes.": "s-quad-0",
+        "Square means multiply the number by itself: negative 5 times negative 5. Two negatives make a positive.": "s-quad-1",
+        "25! Squaring any number — positive or negative — gives a positive result, or zero.": "a-quad-1",
+        "Multiply every pair: x times x, x times 2, 3 times x, 3 times 2 — then combine the middle terms.": "s-quad-2",
+        "x² + 5x + 6! The middle terms 2x and 3x combine into 5x.": "a-quad-2",
+        "Find two numbers that multiply to 12 and add to 7. Think: 3 and 4.": "s-quad-3",
+        "(x + 3)(x + 4)! Factoring runs expansion backwards — hunt for the pair that multiplies and adds just right.": "a-quad-3",
+        "Undo the square with a square root. And remember — both 7 and negative 7 square to 49.": "s-quad-4",
+        "x = 7 or x = −7! Quadratics often have two solutions — never lose the negative one.": "a-quad-4",
+        "Exponents are repeated multiplication in shorthand: 2 to the 5th means 2 multiplied by itself 5 times. Roots run the film backwards.": "s-expo-0",
+        "Multiply it out: 2 times 2 is 4, times 2 is 8, times 2 is 16.": "s-expo-1",
+        "16! Four 2's multiplied together: 2 × 2 × 2 × 2 = 16.": "a-expo-1",
+        "When multiplying powers with the same base, add the exponents: 3 plus 2.": "s-expo-2",
+        "x⁵! Same base — add the exponents. x⁶ would be x³ times x³.": "a-expo-2",
+        "Ask yourself: what number times itself makes 144? Try 12: 12 times 12.": "s-expo-3",
+        "12! The square root undoes the square: 12 squared is 144.": "a-expo-3",
+        "Follow the pattern down: 5 cubed is 125, 5 squared is 25, 5 to the 1st is 5 — each step divides by 5. One more step gives...": "s-expo-4",
+        "1! Any nonzero number to the zero power is 1 — the pattern divides all the way down to it.": "a-expo-4",
+        "Two geometry greatest hits: the angles of every triangle sum to 180 degrees, and Pythagoras unlocks right triangles — a squared plus b squared equals c squared.": "s-geo2-0",
+        "All three angles sum to 180. 65 plus 55 is 120 — subtract that from 180.": "s-geo2-1",
+        "60°! 180 minus 120 is 60. Every triangle, every time: 180 degrees in total.": "a-geo2-1",
+        "Square the legs: 9 and 16. Add them: 25. Now take the square root of 25.": "s-geo2-2",
+        "5! The 3-4-5 triangle is the most famous right triangle of all — Pythagoras guarantees it.": "a-geo2-2",
+        "6 squared is 36, 8 squared is 64. Add them, then find the square root of the sum.": "s-geo2-3",
+        "10! 36 + 64 = 100, and the square root of 100 is 10. It is the 3-4-5 triangle, doubled.": "a-geo2-3",
+        "Angles that add to 90 degrees fill a right angle exactly. 90 minus 35 is...": "s-geo2-4",
+        "55°! Angles summing to 90 degrees are called complementary: 90 − 35 = 55.": "a-geo2-4",
+        "Probability measures chance as a fraction: favorable outcomes over total outcomes. Zero means impossible, 1 means certain — everything real lives in between.": "s-prob-0",
+        "One favorable face — the 4 — out of six faces in total.": "s-prob-1",
+        "1/6! One winning face out of six equally likely faces.": "a-prob-1",
+        "Count them: 3 red marbles out of 5 marbles in total.": "s-prob-2",
+        "3/5! Favorable over total: 3 red out of 5 marbles.": "a-prob-2",
+        "Each flip is independent — it cannot affect the other. Multiply one half by one half.": "s-prob-3",
+        "1/4! Independent events multiply — the coin has no memory of the first flip.": "a-prob-3",
+        "3 favorable sections out of 8 equal sections.": "s-prob-4",
+        "3/8! Same recipe every time: favorable over total, when all outcomes are equally likely.": "a-prob-4",
+        "College math runs on functions: machines that take an input x and return exactly one output, written f of x. Plug in, compute, out comes the answer.": "s-func-0",
+        "Replace every x with 4: 2 times 4 is 8, plus 3.": "s-func-1",
+        "11! Function notation just means 'evaluate here': f(4) = 2 times 4, plus 3.": "a-func-1",
+        "5 squared is 25, minus 1. Square first, then subtract.": "s-func-2",
+        "24! Mind the order of operations inside the function.": "a-func-2",
+        "Division has one forbidden input. Which value makes the denominator zero?": "s-func-3",
+        "0! Dividing by zero is undefined — so 0 is excluded from the domain of the function.": "a-func-3",
+        "Set 3x equal to 30 and solve, just like your very first equations.": "s-func-4",
+        "10! Working backwards from output to input is called finding an inverse — a big college theme.": "a-func-4",
+        "Trigonometry studies right triangles. Sine, cosine, and tangent are ratios of sides — and SOHCAHTOA helps you remember which is which.": "s-trig-0",
+        "SOH: Sine equals Opposite over Hypotenuse. That is the S-O-H in SOHCAHTOA.": "s-trig-1",
+        "Opposite over hypotenuse! SOHCAHTOA: Sine-Opposite-Hypotenuse, Cosine-Adjacent-Hypotenuse, Tangent-Opposite-Adjacent.": "a-trig-1",
+        "Opposite over hypotenuse: 3 over 5.": "s-trig-2",
+        "3/5! The sine depends only on the ratio of the sides, not on the triangle's size.": "a-trig-2",
+        "At zero degrees, the adjacent side stretches the full length of the hypotenuse — so the ratio of adjacent to hypotenuse is...": "s-trig-3",
+        "1! And sin(0°) is 0. Those two facts are where the unit circle begins.": "a-trig-3",
+        "At 45 degrees, the opposite and adjacent sides are exactly equal in length. So their ratio is...": "s-trig-4",
+        "1! Equal sides make an equal ratio — tan of 45 degrees is exactly 1.": "a-trig-4",
+        "A logarithm asks a question: 'what exponent do I need?' Log base 2 of 8 asks: 2 to what power makes 8? Logs unravel exponents — they are the inverse operation.": "s-logs-0",
+        "2 to what power gives 8? Count the multiplications: 2, 4, 8 — that is three.": "s-logs-1",
+        "3! 2 cubed is 8, so log base 2 of 8 is 3. The logarithm IS the exponent.": "a-logs-1",
+        "10 to what power makes 1000? Count the zeros: 10, 100, 1000.": "s-logs-2",
+        "3! 10 cubed is 1000. For exact powers of ten, the log just counts the zeros.": "a-logs-2",
+        "5 times 5 is 25 — so 5 to what power gives 25?": "s-logs-3",
+        "2! 5 squared is 25, so log base 5 of 25 is 2.": "a-logs-3",
+        "Any base raised to the zero power equals 1. So what exponent produces 1?": "s-logs-4",
+        "0! The logarithm of 1 is always 0, whatever the base, because any base to the power 0 makes 1.": "a-logs-4",
+        "A limit asks what value a function approaches as x creeps toward a target — even if the function never quite arrives there. Limits are the foundation all of calculus stands on.": "s-limits-0",
+        "3x gets closer and closer to 3 times 2.": "s-limits-1",
+        "6! Limits describe the destination — and here, substituting gives it directly: 3 times 2 is 6.": "a-limits-1",
+        "Divide 1 by bigger and bigger numbers: 1/10, 1/100, 1/1000. The results shrink toward...": "s-limits-2",
+        "0! The values never quite touch zero, but they approach it — and approaching is exactly what a limit means.": "a-limits-2",
+        "Plugging in 2 gives 0 over 0 — undefined! But factor the top: (x − 2)(x + 2). The (x − 2) factors cancel, leaving x + 2.": "s-limits-3",
+        "4! After canceling, substitute: 2 + 2 = 4. The function has a hole at x = 2, but the limit exists.": "a-limits-3",
+        "Watch where the outputs are heading — not where they happen to stop.": "s-limits-4",
+        "2! The outputs home in on 2. The limit is the value approached.": "a-limits-4",
+        "A derivative measures how fast something is changing — the slope of a curve at a single point. Your first tool is the power rule: bring the exponent down in front, then subtract 1 from it.": "s-deriv-0",
+        "Power rule: bring the 3 down in front, then the exponent drops to 2.": "s-deriv-1",
+        "3x²! Multiply by the old exponent, then subtract 1 from it. That is the power rule.": "a-deriv-1",
+        "5x is a straight line with slope 5 — and a line's derivative is its slope, the same everywhere.": "s-deriv-2",
+        "5! The derivative of a straight line is just its slope — 5 at every point.": "a-deriv-2",
+        "Take it term by term: x squared becomes 2x, and 4x becomes 4.": "s-deriv-3",
+        "2x + 4! Derivatives distribute over addition — differentiate each term on its own.": "a-deriv-3",
+        "Velocity is the derivative of position: the derivative of t squared is 2t. Now plug in t = 3.": "s-deriv-4",
+        "6! At t = 3 the ball moves at 6 units per second. That is why derivatives matter.": "a-deriv-4",
+        "Integration is accumulation — adding up infinitely many tiny pieces to find an area or a total. It is also the derivative's mirror image: antiderivatives run the power rule backwards.": "s-integ-0",
+        "Run the power rule backwards: what function has derivative 2x? Raise the exponent by one and divide by the new exponent.": "s-integ-1",
+        "x² + C! The derivative of x squared is 2x. And never forget +C — a constant's derivative is zero, so one could always be hiding there.": "a-integ-1",
+        "Exponent up one: x to the fourth. Then divide by the new exponent, 4.": "s-integ-2",
+        "x⁴/4 + C! Check it: differentiating x⁴/4 gives back exactly x³.": "a-integ-2",
+        "The region is a plain rectangle: height 2, width 5.": "s-integ-3",
+        "10! Definite integrals measure area — and this one is a simple 2 by 5 rectangle.": "a-integ-3",
+        "Calculus has a famous theorem linking its two big ideas...": "s-integ-4",
+        "Derivatives and integrals! The Fundamental Theorem of Calculus: integration undoes differentiation, and differentiation undoes integration.": "a-integ-4",
+        "Statistics summarizes data with a few powerful numbers. Three centers compete: the mean — the fair-share average; the median — the middle value; and the mode — the most frequent.": "s-stats-0",
+        "Add them all: 4 + 8 + 6 + 10 + 2 = 30. Then divide by how many values there are: 5.": "s-stats-1",
+        "6! Mean equals total divided by count: 30 divided by 5 is 6.": "a-stats-1",
+        "The values are already in order — the median is simply the one in the middle.": "s-stats-2",
+        "9! With five values, the third one sits in the middle.": "a-stats-2",
+        "Count the repeats — which value shows up most often?": "s-stats-3",
+        "2! It appears three times. The mode is the crowd favorite.": "a-stats-3",
+        "The range measures spread: the biggest value minus the smallest.": "s-stats-4",
+        "19! 22 minus 3 is 19. The range tells you how spread out the data is.": "a-stats-4",
+        "A matrix is a grid of numbers inside brackets — the workhorse of college math, computer graphics, and AI. You add matrices entry by entry, matching positions.": "s-matrix-0",
+        "Add matching positions: top-left meets top-left — 1 plus 5.": "s-matrix-1",
+        "6! Matrices add position by position. The full sum is 6, 8 on top and 10, 12 below.": "a-matrix-1",
+        "Row 2 is the bottom row; column 1 is the left column. Find where they cross.": "s-matrix-2",
+        "4! Rows run horizontally, columns vertically — row 2, column 1 is the bottom-left entry.": "a-matrix-2",
+        "The bottom-right entry is 3, and scalar multiplication multiplies every entry by the scalar.": "s-matrix-3",
+        "9! A scalar multiplies the whole grid — every single entry scales by 3.": "a-matrix-3",
+        "Multiply the rows by the columns: 2 times 3.": "s-matrix-4",
+        "6! The dimensions 2 by 3 describe the shape — and 6 entries in total.": "a-matrix-4",
+        "World complete! You finished Grade School — and Middle School is now unlocked!": "unlock-w2",
+        "World complete! You finished Middle School — and High School is now unlocked!": "unlock-w3",
+        "World complete! You finished High School — welcome to College Math!": "unlock-w4",
+        "You finished College Math! From second grade all the way to calculus — what a climb. Gelli is so proud of you!": "unlock-w5",
+        "Level up! You reached a brand new level! Keep climbing, math star!": "levelup"
+      };
+      for (var _ak in AUDIO_EXTRA) { AUDIO[_ak] = AUDIO_EXTRA[_ak]; }
+
+      var voiceEl = null, playQueue = [];
+      function setTalking(on) {
+        var svgs = document.querySelectorAll(".peek-cat, .cat-wrap svg, .celebrate svg");
+        for (var i = 0; i < svgs.length; i++) {
+          if (on) svgs[i].classList.add("talking"); else svgs[i].classList.remove("talking");
+        }
+      }
+      function stopVoice() {
+        playQueue = [];
+        if (voiceEl) { voiceEl.onended = null; voiceEl.onerror = null; try { voiceEl.pause(); } catch (e) {} }
+        setTalking(false);
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      function playNextClip() {
+        if (!playQueue.length) { setTalking(false); return; }
+        var key = playQueue.shift();
+        if (!voiceEl) voiceEl = new Audio();
+        voiceEl.src = "assets/audio/" + key + ".mp3";
+        voiceEl.onended = playNextClip;
+        voiceEl.onerror = playNextClip;
+        setTalking(true);
+        var p = voiceEl.play();
+        if (p && p.catch) p.catch(function () { playNextClip(); });
+      }
+      if ("speechSynthesis" in window) { try { window.speechSynthesis.getVoices(); } catch (e) {} }
+
+      var AC = null;
+      function tone(freq, at, dur, type) {
+        try {
+          if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+          if (AC.state === "suspended") AC.resume();
+          var o = AC.createOscillator(), g = AC.createGain();
+          o.type = type || "sine"; o.frequency.value = freq;
+          var t = AC.currentTime + at;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+          o.connect(g); g.connect(AC.destination);
+          o.start(t); o.stop(t + dur + 0.05);
+        } catch (e) {}
+      }
+      function chime(kind) {
+        if (!state.sound) return;
+        if (kind === "good") { tone(523, 0, 0.16, "triangle"); tone(659, 0.09, 0.16, "triangle"); tone(784, 0.18, 0.26, "triangle"); }
+        else if (kind === "bad") { tone(220, 0, 0.18, "sine"); tone(185, 0.1, 0.22, "sine"); }
+        else if (kind === "win") { tone(523, 0, 0.16, "triangle"); tone(659, 0.1, 0.16, "triangle"); tone(784, 0.2, 0.16, "triangle"); tone(1047, 0.3, 0.34, "triangle"); }
+      }
+
+      /* ---------- helpers ---------- */
+      var app = document.getElementById("app");
+      function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+      function shuffled(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+        return a;
+      }
+      function totalStars() { var n = 0; for (var k in state.stars) n += state.stars[k]; return n; }
+      function worldIndexOf(L) {
+        for (var wi = 0; wi < WORLDS.length; wi++) if (WORLDS[wi].lessons.indexOf(L) >= 0) return wi;
+        return -1;
+      }
+      function worldComplete(wi) {
+        return WORLDS[wi].lessons.every(function (L) { return (state.stars[L.id] || 0) > 0; });
+      }
+      function worldUnlocked(wi) { return wi === 0 || worldComplete(wi - 1); }
+      function lessonUnlocked(L) {
+        var wi = worldIndexOf(L);
+        if (wi < 0 || !worldUnlocked(wi)) return false;
+        var idx = WORLDS[wi].lessons.indexOf(L);
+        return idx === 0 || (state.stars[WORLDS[wi].lessons[idx - 1].id] || 0) > 0;
+      }
+
+      /* ---------- home: greeting, stats, level map, badges ---------- */
+      function renderHome() {
+        run = null;
+        stopVoice();
+        var starsRow = function (id) {
+          var got = state.stars[id] || 0, s = "";
+          for (var i = 0; i < 3; i++) s += starSVG(i < got ? "#ffc93d" : "rgba(255,255,255,0.45)", 17);
+          return s;
+        };
+        var LI = levelInfo(state.xp);
+        var worldsHtml = "";
+        WORLDS.forEach(function (W, wi) {
+          var un = worldUnlocked(wi), doneW = worldComplete(wi);
+          var doneCount = 0;
+          W.lessons.forEach(function (L) { if ((state.stars[L.id] || 0) > 0) doneCount++; });
+          var note;
+          if (!un) note = '<p class="world-note">' + lockSVG("#ffffff") + '<span>Locked — finish World ' + wi + ' to unlock</span></p>';
+          else if (doneW) note = '<p class="world-note">' + starSVG("#ffc93d", 15) + '<span>World complete!</span></p>';
+          else note = '<p class="world-note"><span>' + doneCount + ' of ' + W.lessons.length + ' lessons finished</span></p>';
+          var nodes = "";
+          W.lessons.forEach(function (L, li) {
+            var lun = lessonUnlocked(L);
+            var isNext = lun && !state.stars[L.id];
+            nodes += '<div class="node-row ' + (li % 2 === 0 ? "left" : "right") + '">' +
+              '<button class="node' + (lun ? "" : " locked") + (isNext ? " next" : "") + '" data-lesson="' + L.id + '"' + (lun ? "" : " disabled") + ' aria-label="' + esc(L.title) + (lun ? "" : " (locked)") + '">' +
+              '<span class="orb" style="background:linear-gradient(150deg,' + L.color + ',' + L.color + 'dd)">' + lessonIcon(L.icon) +
+              (lun ? "" : '<span class="lock">' + lockSVG() + '</span>') + '</span>' +
+              '<span class="name">' + esc(L.title) + '</span>' +
+              '<span class="stars">' + starsRow(L.id) + '</span></button></div>';
+          });
+          worldsHtml += '<h2 class="map-title">World ' + W.num + ' · ' + esc(W.name) + '</h2>' + note + '<div class="map">' + nodes + '</div>';
+        });
+        var badges = "";
+        LESSONS.forEach(function (L) {
+          var earned = state.badges.indexOf(L.id) >= 0;
+          badges += '<div class="badge ' + (earned ? "earned" : "notyet") + '"><span class="medal">' + (earned ? medalSVG() : lockSVG("#a49fd0")) + '</span><span class="bname">' + esc(L.badge) + '</span></div>';
+        });
+        var trophies = "";
+        AWARDS.forEach(function (A) {
+          var earned = state.awards.indexOf(A.id) >= 0;
+          trophies += '<div class="badge ' + (earned ? "earned" : "notyet") + '"><span class="medal">' + awardIcon(A.icon) + '</span><span class="bname">' + esc(A.name) + '</span>' +
+            (earned ? "" : '<span class="breq">' + esc(A.req) + '</span>') + '</div>';
+        });
+        app.innerHTML =
+          '<section class="card">' +
+            '<div class="hello"><div class="cat-wrap">' + catSVG("") + '</div>' +
+            '<div><h1>Hi! I\'m Gelli.<br/>Let\'s play math!</h1>' +
+            '<p>I\'ll ask, you tap the answer — and I\'ll show you the trick every time. Pick a stop on the map to start!</p></div></div>' +
+            '<div class="stats">' +
+              '<span class="chip">' + starSVG("#ffc93d", 19) + totalStars() + '<span class="lbl">stars</span></span>' +
+              '<span class="chip">' + flameSVG() + state.streak + '<span class="lbl">answer streak</span></span>' +
+              '<button class="icon-btn sound-btn" id="soundBtn" aria-label="Turn sound ' + (state.sound ? "off" : "on") + '">' + soundSVG(state.sound) + '</button>' +
+            '</div>' +
+            '<div class="level-box">' +
+              '<div class="level-top"><span class="level-badge">Level ' + LI.level + '</span><span class="level-title">' + LI.title + '</span><span class="level-xp">' + state.xp + ' XP</span></div>' +
+              '<div class="track"><div class="fill" style="width:' + Math.round(LI.into / LI.span * 100) + '%"></div></div>' +
+              '<div class="level-sub">' + LI.into + ' of ' + LI.span + ' XP toward Level ' + (LI.level + 1) + '</div>' +
+            '</div>' +
+          '</section>' +
+          worldsHtml +
+          '<section class="card badges-card"><h2>Badge shelf</h2><div class="badge-grid">' + badges + '</div></section>' +
+          '<section class="card badges-card"><h2>Trophy shelf</h2><div class="badge-grid">' + trophies + '</div></section>' +
+          '<p class="foot-note">Made for Leo and friends · Grade school to college math</p>';
+
+        document.getElementById("soundBtn").addEventListener("click", function () {
+          state.sound = !state.sound;
+          if (!state.sound) stopVoice();
+          saveProgress();
+          renderHome();
+          if (state.sound) speak("Sound on! Let's play!");
+        });
+        Array.prototype.forEach.call(app.querySelectorAll("[data-lesson]"), function (b) {
+          b.addEventListener("click", function () { startLesson(b.getAttribute("data-lesson")); });
+        });
+      }
+
+      /* ---------- lesson play ---------- */
+      function startLesson(id) {
+        var L = null;
+        LESSONS.forEach(function (x) { if (x.id === id) L = x; });
+        if (!L) return;
+        var wi0 = worldIndexOf(L);
+        run = { lesson: L, step: 0, mistakes: 0, answered: false, order: null, newLevel: 0, worldWasComplete: wi0 >= 0 && worldComplete(wi0) };
+        renderStep(true);
+      }
+      function currentStep() { return run.lesson.steps[run.step]; }
+
+      function renderStep(speakNow) {
+        var L = run.lesson, st = currentStep();
+        run.answered = false;
+        var pct = Math.round((run.step / L.steps.length) * 100);
+        var isQ = !!st.choices;
+        var order = null;
+        if (isQ) {
+          order = shuffled(st.choices.map(function (_, i) { return i; }));
+          run.order = order;
+        }
+        var tiles = "";
+        if (isQ) {
+          tiles = '<div class="answers' + (st.choices.length > 2 ? "" : " one-col") + '" id="answers">' +
+            order.map(function (ci) {
+              return '<button class="tile" data-ci="' + ci + '">' + esc(st.choices[ci]) + '</button>';
+            }).join("") + '</div>';
+        }
+        app.innerHTML =
+          '<section class="card step-in">' +
+            '<div class="prog-row">' +
+              '<button class="icon-btn" id="quitBtn" aria-label="Pause and go back to the map">' + closeSVG() + '</button>' +
+              '<div class="track"><div class="fill" style="width:' + pct + '%"></div>' +
+              '<span class="end-star" id="endStar">' + starSVG(pct >= 100 ? "#ffc93d" : "#cfc8f2", 30) + '</span></div>' +
+            '</div>' +
+            (st.q ? '<h2 class="q-head">' + esc(st.q) + '</h2>' : '') +
+            '<div class="visual">' + renderArt(st.art) + catSVG("peek-cat") + '</div>' +
+            '<div class="bubble"><span class="who">GELLI SAYS</span>' + esc(st.say) + '</div>' +
+            '<div id="feedback"></div>' + tiles +
+            (isQ ? "" : '<div class="next-row"><button class="btn green" id="nextBtn">' + esc(st.btn || "Next") + '</button></div>') +
+          '</section>';
+
+        var catEl = app.querySelector(".peek-cat");
+        run.catEl = catEl;
+        document.getElementById("quitBtn").addEventListener("click", renderHome);
+        if (!isQ) document.getElementById("nextBtn").addEventListener("click", function () { advance(); });
+        if (isQ) {
+          Array.prototype.forEach.call(app.querySelectorAll(".tile"), function (b) {
+            b.addEventListener("click", function () { pickAnswer(b, parseInt(b.getAttribute("data-ci"), 10)); });
+          });
+        }
+        if (speakNow) speak(st.say);
+      }
+
+      function pickAnswer(btn, ci) {
+        if (run.answered) return;
+        var st = currentStep();
+        var fb = document.getElementById("feedback");
+        if (ci === st.answer) {
+          run.answered = true;
+          btn.classList.add("correct");
+          Array.prototype.forEach.call(app.querySelectorAll(".tile"), function (b) {
+            b.disabled = true;
+            if (b !== btn && !b.classList.contains("wrong")) b.classList.add("dim");
+          });
+          state.streak++;
+          if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+          var lvlUp = addXP(10);
+          if (lvlUp) run.newLevel = lvlUp;
+          var freshAwards = checkAwards();
+          saveProgress();
+          chime("good");
+          if (run.catEl) { run.catEl.classList.remove("bounce"); void run.catEl.offsetWidth; run.catEl.classList.add("bounce"); }
+          var cheer = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+          var awardHtml = "";
+          freshAwards.forEach(function (A) {
+            awardHtml += '<div><span class="new-badge award-pop">' + awardIcon(A.icon) + ' New award: ' + esc(A.name) + '!</span></div>';
+          });
+          fb.innerHTML = '<div class="aha"><span class="aha-tag">Aha!</span>' + esc(st.aha) + '</div>' + awardHtml +
+            '<div class="next-row"><button class="btn green" id="nextBtn">' +
+            (run.step === run.lesson.steps.length - 1 ? "Finish!" : "Next") + '</button></div>';
+          document.getElementById("nextBtn").addEventListener("click", function () { advance(); });
+          speakSeq([cheer, st.aha]);
+        } else {
+          run.mistakes++;
+          state.streak = 0;
+          saveProgress();
+          btn.classList.add("wrong");
+          btn.disabled = true;
+          chime("bad");
+          if (run.catEl) { run.catEl.classList.remove("nod"); void run.catEl.offsetWidth; run.catEl.classList.add("nod"); }
+          var oops = OOPS[Math.floor(Math.random() * OOPS.length)];
+          fb.innerHTML = '<div class="bubble" style="margin-top:14px"><span class="who">GELLI SAYS</span>' + esc(oops) + '</div>';
+          speak(oops);
+        }
+      }
+
+      function advance() {
+        if (run.step < run.lesson.steps.length - 1) {
+          run.step++;
+          renderStep(true);
+        } else {
+          finishLesson();
+        }
+      }
+
+      function finishLesson() {
+        var L = run.lesson;
+        var earned = run.mistakes === 0 ? 3 : (run.mistakes <= 2 ? 2 : 1);
+        var prevBest = state.stars[L.id] || 0;
+        var isNewBest = earned > prevBest;
+        if (isNewBest) state.stars[L.id] = earned;
+        var newBadge = state.badges.indexOf(L.id) < 0;
+        if (newBadge) state.badges.push(L.id);
+        var wi = worldIndexOf(L);
+        var worldJustDone = wi >= 0 && !run.worldWasComplete && worldComplete(wi);
+        var xpGain = 0;
+        if (prevBest === 0) xpGain += 25;
+        if (isNewBest) xpGain += (earned - prevBest) * 20;
+        if (worldJustDone) xpGain += 100;
+        var lvl2 = addXP(xpGain);
+        if (lvl2) run.newLevel = lvl2;
+        var freshAwards = checkAwards();
+        saveProgress();
+        stopVoice();
+        renderHome();
+        chime("win");
+        confetti();
+        var starsHtml = "";
+        for (var i = 0; i < 3; i++) {
+          starsHtml += '<span class="pop" style="animation-delay:' + (0.25 + i * 0.3) + 's;display:inline-block">' +
+            starSVG(i < earned ? "#ffc93d" : "#d9d4f2", 62) + '</span>';
+        }
+        var pills = "";
+        if (newBadge) pills += '<div><span class="new-badge">' + medalSVG() + ' New badge: ' + esc(L.badge) + '</span></div>';
+        if (worldJustDone && wi < WORLDS.length - 1) {
+          pills += '<div><span class="new-badge">' + starSVG("#92400e", 24) + ' New world unlocked: World ' + WORLDS[wi + 1].num + ' · ' + esc(WORLDS[wi + 1].name) + '!</span></div>';
+        } else if (worldJustDone) {
+          pills += '<div><span class="new-badge">' + starSVG("#92400e", 24) + ' You finished the whole climb — College complete!</span></div>';
+        }
+        if (run.newLevel) {
+          var NLI = levelInfo(state.xp);
+          pills += '<div><span class="new-badge">' + awardIcon("bolt") + ' Level up! You are now Level ' + run.newLevel + ' — ' + NLI.title + '!</span></div>';
+        }
+        freshAwards.forEach(function (A) {
+          pills += '<div><span class="new-badge">' + awardIcon(A.icon) + ' New award: ' + esc(A.name) + '!</span></div>';
+        });
+        var ov = document.createElement("div");
+        ov.className = "overlay";
+        ov.innerHTML = '<section class="card celebrate">' +
+          '<div style="width:120px;margin:0 auto">' + catSVG("peek-cat cheer") + '</div>' +
+          '<h2>Lesson complete!</h2><p>' + esc(L.title) + '</p>' +
+          '<div class="big-stars">' + starsHtml + '</div>' + pills +
+          '<div class="btn-row"><button class="btn ghost" id="againBtn">Play again</button>' +
+          '<button class="btn green" id="mapBtn">Back to the map</button></div></section>';
+        document.body.appendChild(ov);
+        var speakParts = ["Lesson complete! You earned " + earned + (earned === 1 ? " star!" : " stars!") + " Amazing work!"];
+        if (worldJustDone) speakParts.push(UNLOCK_TEXT[wi + 2]);
+        if (run.newLevel) speakParts.push(LEVELUP_TEXT);
+        speakSeq(speakParts);
+        ov.querySelector("#mapBtn").addEventListener("click", function () { ov.remove(); });
+        ov.querySelector("#againBtn").addEventListener("click", function () { ov.remove(); startLesson(L.id); });
+      }
+
+      function confetti() {
+        var colors = ["#8b5cf6", "#38bdf8", "#34d399", "#facc15", "#f472b6", "#fb923c"];
+        for (var i = 0; i < 46; i++) {
+          var d = document.createElement("div");
+          d.className = "confetti";
+          var sz = 7 + Math.random() * 8;
+          d.style.left = (Math.random() * 100) + "vw";
+          d.style.width = sz + "px"; d.style.height = (sz * 0.5) + "px";
+          d.style.background = colors[i % colors.length];
+          d.style.animationDuration = (2.2 + Math.random() * 1.8) + "s";
+          d.style.animationDelay = (Math.random() * 0.5) + "s";
+          document.body.appendChild(d);
+          (function (el) { setTimeout(function () { el.remove(); }, 4800); })(d);
+        }
+      }
+
+      renderHome();
+    </script>
+  </body>
+</html>
