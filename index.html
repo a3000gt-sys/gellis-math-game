@@ -2541,7 +2541,7 @@ w4: [
          If the backend is not reachable, the board and the post
          button say so honestly — "not switched on yet".
          ============================================================ */
-      var CLUB_API = ""; /* club backend base URL; "" = same origin */
+      var CLUB_API = "https://club.realskillspress.com"; /* club backend base URL; "" = same origin */
 
       /* ---------- club nickname (session-only, auto + filtered) ---------- */
       var NICK_KEY = "gelli-club-nick-v1";
@@ -2604,13 +2604,14 @@ w4: [
         var host = document.getElementById("clubBoard");
         if (!host) return;
         var myNick = getNick();
-        fetch(CLUB_API + "/club/board").then(function (res) {
+        fetch(CLUB_API + "/board?club=ellies-game-room").then(function (res) {
           if (!res.ok) throw new Error("board failed");
           return res.json();
         }).then(function (data) {
           var rows = null;
           if (Array.isArray(data)) rows = data;
           else if (data && Array.isArray(data.rows)) rows = data.rows;
+          else if (data && Array.isArray(data.players)) rows = data.players.map(function (p) { var g = (p.games && p.games.math) || {}; return { nickname: p.player, stars: (g.stars != null ? g.stars : p.totalStars) || 0, level: (g.level != null ? g.level : p.grade) || 1, trophies: (p.awards || []).length }; });
           if (!rows) throw new Error("board shape");
           rows = rows.filter(function (r) {
             return r && typeof r.nickname === "string" &&
@@ -2645,10 +2646,10 @@ w4: [
         var btn = document.getElementById("postBtn");
         if (btn) { btn.disabled = true; btn.textContent = "Posting…"; }
         var nick = getNick();
-        fetch(CLUB_API + "/club/post", {
+        fetch(CLUB_API + "/score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(myBoardRow(nick))
+          body: JSON.stringify({ club: "ellies-game-room", player: nick, game: "math", level: levelInfo(state.xp).level, xp: state.xp, stars: totalStars(), awards: state.awards })
         }).then(function (res) {
           if (!res.ok) throw new Error("post failed");
           clubFlash = "Score posted — you're climbing the board!";
